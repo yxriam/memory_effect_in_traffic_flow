@@ -13,7 +13,7 @@ from scipy import stats
 
 
 BASE = Path(__file__).resolve().parent / "outputs_clean"
-NEW_DIR = BASE / "04_mode_memory_new_5s"
+NEW_DIR = BASE / "04_mode_memory"          # final 5 s run written by 04a_resample_sensitivity_select.py
 OLD_DIR = BASE / "04_mode_memory_old_5s"
 OUT_DIR = BASE / "04_mode_memory_compare_5s"
 

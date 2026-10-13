@@ -40,7 +40,7 @@
 - 📓 **Notebook 优先、缓存优先** —— highD 与出租车分析各是一份 notebook，每一步都写明*为什么做、预期什么、如何解读*；`RUN_COMPUTE = False` 时几秒钟内由随仓库发布的 CSV/NPZ 缓存复现全部表格与图。
 - 🎨 **可直接投稿的图** —— Nature 配色的多面板图（600 dpi `.png` + `.pdf`），由 notebook 自动生成。
 - 🔍 **诚实的估计量分析** —— 我们证明出租车数据上二阶收益的*符号*取决于平滑估计量（add-α 与 back-off β），并在训练段内部验证集上调 β；信息论上限（CMI）与实际实现的收益并列报告。
-- 🧹 **无隐藏路径、无密钥** —— 科研代码中所有机器相关的绝对路径已移除；原始数据放在 git 忽略的 `data/` 目录，附下载说明。
+- 🧹 **只保留论文用到的代码** —— 每个脚本都对应论文中的某张表或图；废弃实验、重复脚本和机器相关的绝对路径都已清除，原始数据放在 git 忽略的 `data/` 目录，附下载说明。
 
 ---
 
@@ -88,7 +88,7 @@ LRT（2 vs 1）：G = 1.08 × 10⁶，770 万步，p ≈ 0。VACF 非指数衰�
 <details>
 <summary><b>机场 —— BTS DB1B O-D 调查，2024 年第 1 季度（511 407 条路径，436 个机场）</b></summary>
 
-在一阶链或 RNN 下，经过枢纽（如 DEN）之后到达的机场与旅客来自哪里无关；二阶链或 LSTM 则再现了占主导的**返回出发地**流（1000 步滚动预测的三步返回率 0.97，RNN 为 0.00）。[`airports/`](airports/) 中的代码为原始科研代码，作为遗留模块保留。
+在一阶链或 RNN 下，经过枢纽（如 DEN）之后到达的机场与旅客来自哪里无关；二阶链或 LSTM 则再现了占主导的**返回出发地**流（1000 步滚动预测的三步返回率 0.97，RNN 为 0.00）。代码见 [`airports/`](airports/)。
 </details>
 
 ---
@@ -151,10 +151,12 @@ memory_effect_in_traffic_flow/
 │   ├── README.md · METHODS.md · EXPERIMENT_RESULTS.md
 │   ├── outputs_clean/                     流水线全部输出：记忆流、相关性、按方式记忆、重采样敏感性、图
 │   └── data_raw/Data/                     ← 放 GeoLife 用户文件夹（git 忽略）
-└── airports/                     ✈️ BTS DB1B 航空 O-D 路径（遗留科研代码）
-    ├── pre_process/airports_sequences_split.py    DB1B .asc → 按路径长度拆分的机场代码序列
-    ├── markov_chain/                      一/二/三阶链、返回率、桑基图数据与绘图
-    ├── lstm_markov/                       LSTM / RNN 训练与 1000 步滚动预测、Markov+LSTM 混合、lstm_rnn_predict.ipynb
+└── airports/                     ✈️ BTS DB1B 航空 O-D 路径
+    ├── airports_sequences_split.py        DB1B .asc → 按路径长度分组的机场代码序列
+    ├── markov_chain.py                    变阶 MarkovChain（采样 / argmax 预测、滚动生成）
+    ├── city_markov_sankey.py              城市级一阶 vs 二阶链 → 经枢纽的回流桑基图（图 3 上）
+    ├── lstm_rnn_predict.ipynb             RNN 与 LSTM 滚动预测、返回率、经 DEN 的桑基图（图 3 下）
+    ├── model/ · dataloader/ · airport_dict.json
     └── data/                              ← DB1B .asc 与派生序列（git 忽略）
 ```
 
@@ -182,7 +184,7 @@ memory_effect_in_traffic_flow/
 | 表：出租车 CMI、add-α 与 back-off ΔLL、调参 β*、全局网格稳健性 | `taxi/taxi_memory_analysis.ipynb` §4–8（`memory_full_summary.csv`、`memory_backoff_tuned_summary.csv`） |
 | 图 2 / 图 3 出租车 | 同一 notebook → `taxi/figs/` |
 | GeoLife 熵减、相关性热力图、按方式 Hurst / 核 α、5 s 敏感性 | `geolife/` 流水线 → `outputs_clean/`（`summary_report.txt`、`02_memory_flow/`、`03_correlation_analysis/`、`04_mode_memory*/`、`figures/`） |
-| 机场桑基图、RNN 与 LSTM 返回率 | `airports/lstm_markov/lstm_rnn_predict.ipynb`、`airports/markov_chain/airports_sankey*.py` |
+| 图 3 机场桑基图（经芝加哥 / 经 DEN）、RNN 与 LSTM 返回率 | `airports/city_markov_sankey.py`、`airports/lstm_rnn_predict.ipynb` |
 
 修改出租车代码前值得知道的两个实现细节：
 
@@ -196,7 +198,7 @@ memory_effect_in_traffic_flow/
 - Python ≥ 3.9
 - 核心：`numpy`、`pandas`、`scipy`、`matplotlib`、`tqdm`、`jupyter`（`requirements.txt`）
 - GeoLife 额外：`scikit-learn`；`91_optional_rnn_lstm_residual.py` 可选需要 `torch`
-- 机场额外：`torch`、`scikit-learn`、`pyecharts`、`plotly`、`chardet`、`tensorboard`、`openpyxl`（`requirements-full.txt`）
+- 机场额外：`torch`、`pyecharts`、`plotly`（`requirements-full.txt`）
 
 notebook 最近一次在 Python 3.13 / NumPy 2.x 下执行；GeoLife 与机场脚本在 Python 3.8–3.11 下运行。
 

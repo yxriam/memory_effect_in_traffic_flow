@@ -8,9 +8,7 @@ geolife/data_raw/*
 geolife/cache_clean/
 airports/data/*
 !airports/data/README.md
-airports/**/sequence_split/
-airports/**/output/
-airports/**/logs/
+airports/output/
 *.pth
 *.pkl
 *.asc

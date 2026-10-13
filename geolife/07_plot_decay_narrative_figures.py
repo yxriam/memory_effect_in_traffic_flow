@@ -13,9 +13,7 @@ from scipy import stats
 
 
 BASE = Path(__file__).resolve().parent / "outputs_clean"
-MODE_DIR = BASE / "04_mode_memory_new_5s"
-if not MODE_DIR.exists():
-    MODE_DIR = BASE / "04_mode_memory"
+MODE_DIR = BASE / "04_mode_memory"         # final 5 s run written by 04a_resample_sensitivity_select.py
 OUT_DIR = BASE / "05_decay_narrative_figures"
 
 GROUPS = {
