@@ -1,0 +1,13 @@
+{
+  "G_statistic": 1078644.3419492925,
+  "ll_1order": -2795987.2698721383,
+  "ll_2order": -2256665.098897492,
+  "n_steps_compared": 7706377,
+  "delta_ll_per_step": 0.06998388100850066,
+  "df_empirical": 2451,
+  "df_nominal": 7220,
+  "p_value_empirical_df": 0.0,
+  "p_value_nominal_df": 0.0,
+  "p_value_method_empirical_df": "wilson_hilferty_normal_approx",
+  "p_value_method_nominal_df": "wilson_hilferty_normal_approx"
+}

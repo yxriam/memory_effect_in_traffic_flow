@@ -1,0 +1,26 @@
+[
+  {
+    "from_k": 0,
+    "to_k": 1,
+    "mean_delta": 2.5946794767596892,
+    "wilcoxon_p": 0.0,
+    "test_statistic": 242429190.0,
+    "test_method": "normal_approx_average_ranks"
+  },
+  {
+    "from_k": 1,
+    "to_k": 2,
+    "mean_delta": 0.10540986635225033,
+    "wilcoxon_p": 0.0,
+    "test_statistic": 241593846.0,
+    "test_method": "normal_approx_average_ranks"
+  },
+  {
+    "from_k": 2,
+    "to_k": 3,
+    "mean_delta": 0.028704557522060224,
+    "wilcoxon_p": 0.0,
+    "test_statistic": 213507888.0,
+    "test_method": "normal_approx_average_ranks"
+  }
+]

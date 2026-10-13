@@ -1,0 +1,30 @@
+# ---- raw data (never committed; see README "Datasets") ----
+highD/data/*
+!highD/data/README.md
+taxi/data/*
+!taxi/data/README.md
+geolife/data_raw/*
+!geolife/data_raw/README.md
+geolife/cache_clean/
+airports/data/*
+!airports/data/README.md
+airports/**/sequence_split/
+airports/**/output/
+airports/**/logs/
+*.pth
+*.pkl
+*.asc
+*.plt
+
+# ---- scratch / tooling ----
+_to_delete/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+.env
+.DS_Store
+Thumbs.db
+*.log
+_audit/

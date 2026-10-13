@@ -1,0 +1,43 @@
+Memory flow:
+  users = 181
+  first-order entropy median = 0.5 bits
+  second-order entropy median = 0.1243 bits
+  entropy reduction median = 0.3464 bits
+  entropy reduction pct median = 74.25%
+  empirical two-step return median = 0.01855
+  first-order expected return median = 0.04605
+  second-order expected return median = 0.01855
+  positive entropy-reduction users = 180/181
+  global pooled flow:
+    H1 = 1.74 bits
+    H2 = 0.6774 bits
+    reduction = 1.063 bits
+    two-step return first/second = 0.06959/0.02291
+
+Correlation analysis:
+  Pearson: two_step_return_rate_feature vs empirical_two_step_return = 1
+  Pearson: unique_state_ratio vs first_order_entropy_bits = -0.9438
+  Pearson: three_step_return_rate vs empirical_two_step_return = 0.9301
+  Spearman: two_step_return_rate_feature vs empirical_two_step_return = 1
+  Spearman: unique_state_ratio vs first_order_entropy_bits = -0.9694
+  Spearman: second_order_history_reuse vs second_order_entropy_bits = 0.9645
+  Kendall: two_step_return_rate_feature vs empirical_two_step_return = 1
+  Kendall: unique_state_ratio vs first_order_entropy_bits = -0.877
+  Kendall: second_order_history_reuse vs second_order_entropy_bits = 0.8762
+  Mutual information: two_step_return_rate_feature vs empirical_two_step_return = 3.874
+  Mutual information: unique_state_ratio vs first_order_entropy_bits = 1.877
+  Mutual information: second_order_history_reuse vs second_order_entropy_bits = 1.784
+
+Mode memory:
+  selected resample interval = 5 s
+  airplane: segments=13, H=0.9892, acf_alpha=0.4383, kernel_alpha=1.004
+  bike: segments=767, H=0.9065, acf_alpha=1.215, kernel_alpha=1.011
+  boat: segments=3, H=0.9388, acf_alpha=0.2926, kernel_alpha=0.1464
+  bus: segments=1113, H=0.8665, acf_alpha=0.949, kernel_alpha=1.542
+  car: segments=696, H=0.9554, acf_alpha=1.084, kernel_alpha=1.085
+  motorcycle: segments=0, H=NA, acf_alpha=NA, kernel_alpha=NA
+  run: segments=1, H=0.8782, acf_alpha=0.8451, kernel_alpha=0.3738
+  subway: segments=338, H=0.9616, acf_alpha=0.6253, kernel_alpha=0.61
+  taxi: segments=220, H=0.9367, acf_alpha=1.289, kernel_alpha=0.667
+  train: segments=127, H=0.984, acf_alpha=0.4856, kernel_alpha=0.7085
+  walk: segments=1489, H=0.8876, acf_alpha=0.7413, kernel_alpha=1.484

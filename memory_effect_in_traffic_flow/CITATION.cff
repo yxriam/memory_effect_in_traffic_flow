@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "memory_effect_in_traffic_flow: quantifying memory effects in traffic flows"
+authors:
+  - family-names: Yang
+    given-names: Xinran
+    affiliation: Alibaba Business School, Hangzhou Normal University
+  - family-names: Ren
+    given-names: Zhuoming
+    affiliation: Alibaba Business School, Hangzhou Normal University
+year: 2026
+repository-code: https://github.com/yxriam/memory_effect_in_traffic_flow
+license: MIT

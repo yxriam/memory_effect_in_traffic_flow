@@ -1,0 +1,28 @@
+{
+  "selected_resample_sec": 5.0,
+  "rule": "choose the smallest candidate with median native-gap coverage, segment coverage, and finite-kernel ratios above thresholds; otherwise choose the highest score",
+  "thresholds": {
+    "min_native_coverage_pct": 95.0,
+    "min_segment_coverage": 0.85,
+    "min_finite_ratio": 0.7
+  },
+  "max_lag_seconds": 1000.0,
+  "fit_window_seconds": [
+    10.0,
+    400.0
+  ],
+  "final_lags": {
+    "max_lag": 200,
+    "fit_min_lag": 2,
+    "fit_max_lag": 80
+  },
+  "sensitivity_sample": {
+    "max_modes": null,
+    "max_files_per_mode": 100000,
+    "max_segments_per_file": null
+  },
+  "raw_gap_profile": {
+    "sample_files_per_mode": 100000,
+    "max_gaps_per_mode": 10000000
+  }
+}
