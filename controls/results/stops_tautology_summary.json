@@ -1,0 +1,213 @@
+{
+ "window_samples": 60,
+ "max_lag_s": 150.0,
+ "windows_without_variance": 9,
+ "stop_free": {
+  "by_mode": [
+   {
+    "mode": "walk",
+    "windows": 1002,
+    "users": 37,
+    "tau_median": 5.0,
+    "censored": 0.0,
+    "speed": 1.4202,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "bike",
+    "windows": 1921,
+    "users": 25,
+    "tau_median": 10.0,
+    "censored": 0.0,
+    "speed": 3.5672,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "bus",
+    "windows": 959,
+    "users": 25,
+    "tau_median": 20.0,
+    "censored": 0.0,
+    "speed": 12.3122,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "subway",
+    "windows": 274,
+    "users": 20,
+    "tau_median": 15.0,
+    "censored": 0.0,
+    "speed": 10.5101,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "car",
+    "windows": 2772,
+    "users": 23,
+    "tau_median": 25.0,
+    "censored": 0.0,
+    "speed": 15.0577,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "taxi",
+    "windows": 379,
+    "users": 14,
+    "tau_median": 25.0,
+    "censored": 0.0,
+    "speed": 14.2387,
+    "stops_per_km": 0.0
+   },
+   {
+    "mode": "train",
+    "windows": 2536,
+    "users": 12,
+    "tau_median": 40.0,
+    "censored": 0.0,
+    "speed": 27.29,
+    "stops_per_km": 0.0
+   }
+  ],
+  "eta2_log_tau": 0.4742146970815312,
+  "kruskal_H": 4480.671645562123,
+  "kruskal_p": 0.0,
+  "max_over_min_median": 8.0
+ },
+ "whole": {
+  "by_mode": [
+   {
+    "mode": "walk",
+    "windows": 6240,
+    "users": 38,
+    "tau_median": 10.0,
+    "censored": 0.0,
+    "speed": 1.2288,
+    "stops_per_km": 4.4601
+   },
+   {
+    "mode": "bike",
+    "windows": 3745,
+    "users": 25,
+    "tau_median": 10.0,
+    "censored": 0.0,
+    "speed": 3.2086,
+    "stops_per_km": 0.753
+   },
+   {
+    "mode": "bus",
+    "windows": 6877,
+    "users": 29,
+    "tau_median": 15.0,
+    "censored": 0.0,
+    "speed": 5.0491,
+    "stops_per_km": 1.0742
+   },
+   {
+    "mode": "subway",
+    "windows": 1126,
+    "users": 23,
+    "tau_median": 30.0,
+    "censored": 0.0,
+    "speed": 11.5037,
+    "stops_per_km": 0.3598
+   },
+   {
+    "mode": "car",
+    "windows": 4641,
+    "users": 24,
+    "tau_median": 25.0,
+    "censored": 0.0,
+    "speed": 11.5581,
+    "stops_per_km": 0.2058
+   },
+   {
+    "mode": "taxi",
+    "windows": 875,
+    "users": 16,
+    "tau_median": 20.0,
+    "censored": 0.0,
+    "speed": 9.0474,
+    "stops_per_km": 0.3849
+   },
+   {
+    "mode": "train",
+    "windows": 2637,
+    "users": 12,
+    "tau_median": 40.0,
+    "censored": 0.0,
+    "speed": 27.0933,
+    "stops_per_km": 0.0048
+   }
+  ],
+  "eta2_log_tau": 0.3706484789248411,
+  "kruskal_H": 9710.96726102836,
+  "kruskal_p": 0.0,
+  "max_over_min_median": 4.0,
+  "spearman_tau_stops": [
+   -0.900937462695559,
+   0.00562058671534502
+  ]
+ },
+ "ar1_bias": {
+  "by_mode": [
+   {
+    "mode": "walk",
+    "ratio_median": 1.0,
+    "tau": 10.0,
+    "tau_corrected": 10.0,
+    "stops_per_km": 4.7714
+   },
+   {
+    "mode": "bike",
+    "ratio_median": 1.0,
+    "tau": 20.0,
+    "tau_corrected": 20.0,
+    "stops_per_km": 0.7271
+   },
+   {
+    "mode": "bus",
+    "ratio_median": 0.875,
+    "tau": 20.0,
+    "tau_corrected": 24.0,
+    "stops_per_km": 1.3782
+   },
+   {
+    "mode": "subway",
+    "ratio_median": 0.7692,
+    "tau": 40.0,
+    "tau_corrected": 58.6957,
+    "stops_per_km": 0.4813
+   },
+   {
+    "mode": "car",
+    "ratio_median": 0.7285,
+    "tau": 75.0,
+    "tau_corrected": 110.0,
+    "stops_per_km": 0.1686
+   },
+   {
+    "mode": "taxi",
+    "ratio_median": 0.7143,
+    "tau": 75.0,
+    "tau_corrected": 97.2243,
+    "stops_per_km": 0.2818
+   },
+   {
+    "mode": "train",
+    "ratio_median": 0.5757,
+    "tau": 175.0,
+    "tau_corrected": 315.0,
+    "stops_per_km": 0.0
+   }
+  ],
+  "spearman_raw": [
+   -0.981980506061966,
+   8.290963420193979e-05
+  ],
+  "spearman_corrected": [
+   -0.9642857142857145,
+   0.00045414916919416935
+  ],
+  "ratio_vs_length_spearman": -0.09488806683774567
+ }
+}

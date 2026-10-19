@@ -1,6 +1,7 @@
 # ---- raw data (never committed; see README "Datasets") ----
 highD/data/*
 !highD/data/README.md
+highD/data_full/
 taxi/data/*
 !taxi/data/README.md
 geolife/data_raw/*
@@ -39,3 +40,6 @@ prediction/infomap_input/
 *.npy
 *_RUNNING.txt
 *_DONE.txt
+RUNNING.txt
+DONE.txt
+prediction/results/work_taxi_network_controls/

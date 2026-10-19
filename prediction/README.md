@@ -14,13 +14,15 @@ prediction/
 ├── ch5_learning_curve.py   KN orders 1–4 vs amount of training data  → results/ngram/ch5_learning_curve_*.csv
 ├── unit_cache_mix2.py      KN + same-unit model + recent-cell cache  → results/ngram/ch5_mix_*.csv
 ├── neural_ch5.py           LSTM / Transformer, 128-step context      → results/neural/neural_*.json
-├── neural_hist.py          LSTM that sees only the last k symbols    → results/neural/hist/hist_*.json
+├── neural_hist.py          LSTM (or --model transformer) that sees only the last k symbols → results/neural/hist/hist_*.json
 ├── summarise_neural.py     JSON → results/neural/ch5_neural_summary.csv, results/ngram/ch5_hist_ablation.csv
 ├── mapeq.py                two-level map equation for first-order and memory (state) networks
 ├── ch6_networks.py         first-order vs memory network + Markov surrogate → results/ngram/ch6_<dataset>.csv, infomap_input/*.net
 ├── ch6_extra.py            codelength decomposition (entropy vs overlap) → results/ngram/ch6_decomp_*.csv
 ├── export_surrogates.py    surrogate networks for Infomap              → infomap_input/*_surrogate_*.net
 ├── run_infomap.py          official Infomap on infomap_input/*.net     → results/infomap/*.clu, infomap_summary.csv
+├── taxi_network_controls.py  taxi memory network vs per-vehicle surrogates and after de-jitter (Infomap) → results/ngram/taxi_network_controls.csv
+├── positive_control.py     P0-5: synthetic taxi-like sets with a planted long-range dependence (make / ngram / summary)
 ├── figures/                fig_ch5.py, fig_ch6.py, fig_memnet_paper.py → figures/output/
 ├── scripts/                Windows .bat launchers for the GPU and Infomap runs
 ├── data/                   *.npz (git-ignored, rebuilt by export_data.py) · *.json split metadata (committed)
@@ -53,6 +55,14 @@ python prediction/ch6_networks.py taxi            # also geolife, highd
 python prediction/ch6_extra.py highd geolife taxi
 python prediction/export_surrogates.py
 scripts\run_infomap.bat                           # pip install infomap, then run_infomap.py
+
+# 4b. checks of the to-do list (2026-10-19)
+python prediction/taxi_network_controls.py        # needs INFOMAP_BIN (Infomap 2.8.0 binary) or pip install infomap==2.8.0
+python prediction/positive_control.py make        # data/pc_L<L>_I<10 x bits>.npz (+ .json with md5 and generator entropies)
+python prediction/positive_control.py ngram       # CPU check → results/ngram/positive_control_ngram.csv
+scripts\run_positive_control.bat                  # GPU: positive control + Transformer history ablation (two lanes)
+python prediction/positive_control.py summary     # → results/ngram/positive_control_summary.csv, figures/output/fig_positive_control.*
+python prediction/summarise_neural.py             # also writes results/ngram/ch5_hist_ablation_transformer.csv
 
 # 5. figures
 python prediction/figures/fig_ch5.py              # fig_ch5_ngram  (paper: prediction figure)

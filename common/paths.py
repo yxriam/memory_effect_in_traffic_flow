@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 _DEFAULTS = {
     'highd_tracks': ROOT / 'highD' / 'data',                                   # 01_tracks.csv ... 60_tracks.csv
+    'highd_full': ROOT / 'highD' / 'data_full',                               # original highD release: *_tracks.csv with velocities, accelerations, preceding vehicle; *_tracksMeta.csv
     'taxi_raw': ROOT / 'taxi' / 'data' / 'Taxi_070220',                        # 4 316 per-taxi files
     'geolife_raw': ROOT / 'geolife' / 'data_raw' / 'Data',                     # GeoLife 1.3 user folders 000 ... 181
     'geolife_trips_by_mode': ROOT / 'geolife' / 'data_raw' / 'trips_by_mode_data',  # <mode>/plt/*.plt
@@ -44,6 +45,7 @@ _CFG = _load()
 
 # raw data (outside git)
 HIGHD_TRACKS = _CFG['highd_tracks']
+HIGHD_FULL = _CFG['highd_full']
 TAXI_RAW = _CFG['taxi_raw']
 GEOLIFE_RAW = _CFG['geolife_raw']
 GEOLIFE_TRIPS_BY_MODE = _CFG['geolife_trips_by_mode']
@@ -76,7 +78,7 @@ def out(path):
     return str(path)
 
 
-_PATTERN = {'highd_tracks': '*_tracks.csv', 'taxi_raw': '*', 'geolife_raw': '[0-9][0-9][0-9]',
+_PATTERN = {'highd_tracks': '*_tracks.csv', 'highd_full': '*_tracksMeta.csv', 'taxi_raw': '*', 'geolife_raw': '[0-9][0-9][0-9]',
             'geolife_trips_by_mode': '*/plt/*.plt', 'geolife_cache': '*.npz'}
 
 

@@ -46,6 +46,26 @@ Data locations come from `../common/paths.py` (see `../local_paths.example.json`
 | `accel_acf.py` | `work/highd_states.pkl` | `highd_accel_acf.csv` |
 | `build_trips_by_mode.py [Data] [out]` | `geolife_raw` (labels.txt) | rebuilds `trips_by_mode_data` into `work/` (never overwrites your copy) |
 
+Checks added for the to-do list of 2026-10-18 (record: `../experiment_log/2026-10-19_paper1_verification.md`, part 2):
+
+| script | to-do | reads | writes (`results/`) |
+|---|---|---|---|
+| `null_calibration.py` | P0-1 | GeoLife cache, `taxi_raw` | `null_calibration_negative.csv`, `_positive.csv`, `_summary.json` — false-positive rate on first-order surrogates, recovery of a known I₂ |
+| `highd_full.py` | (helper) | `highd_full` (original highD release with velocities and leaders) | caches `work/highd_full_states.pkl`: v, a by backward difference / dataset / Savitzky–Golay, gap, dv, leader, lane |
+| `highd_reaction_delay.py [--lead-accel]` | P0-2 | `work/highd_full_states.pkl` | `highd_reaction_delay[_leadacc].csv`, `_null.csv`, `_knn.csv` — gain of the leader's dv / gap 0.4–2 s back, horizons 0.2 / 1 / 2 s |
+| `highd_accel_noise.py` | P0-3 | `work/highd_full_states.pkl` | `highd_accel_noise.csv`, `_gains.csv`, `_acf.csv` — augmentation table and acceleration ACF for five derivative definitions |
+| `stops_tautology.py` | P0-4 | `geolife_trips_by_mode`, `row_persistence.csv` | `stops_windows.csv`, `stops_tautology_summary.json`, `stops_lmm.csv`, `stops_ar1_bias.csv` |
+| `nonstationarity.py` | P1-1 | `geolife_trips_by_mode` | `nonstationarity_geolife.csv` — excess CMI with the null stratified by (cell × trip type) |
+| `origin_vs_direction.py` | P1-2 | GeoLife cache, `taxi_raw`, `taxi_pick.json` | `origin_direction_geolife.csv`, `origin_direction_taxi.csv` |
+| `hurst_power.py` | P1-3 | `geolife_trips_by_mode`, `hurst_control.csv` | `hurst_power_synthetic.csv`, `_real.csv`, `_summary.csv` |
+| `taxi_dejitter.py` | P1-5 | `taxi_raw` | `taxi_dejitter.csv`, `taxi_dejitter_summary.csv` |
+| `route_constraint.py` | P1-6 | `geolife_trips_by_mode` | `route_equal_sample.csv`, `route_cells.csv`, `route_branching_wls.csv` |
+
+The taxi memory-network part of P1-1 and P1-5 is `../prediction/taxi_network_controls.py`; P0-5 is
+`../prediction/positive_control.py`. Figures: `figures/fig_supplement_checks.py` → `figures/output/fig_s_*.pdf`.
+`highd_full` must point to the folder of the original release (`*_tracks.csv`, `*_tracksMeta.csv`), e.g.
+`D:/BaiduNetdiskDownload/highd-dataset-v1.0/data`; the checks used recordings 01–23 (see the experiment log).
+
 **Taxi origin memory.** The committed `taxi_origin_*.csv` came from the first 100 files of `taxi_pick.json`
 (Taxi_106 … Taxi_76698), all of which are usable. The script pools the first 100 usable files in list order and
 writes their names to `taxi_origin_<grid>_vehicles.txt`, so on a full copy of the data it picks exactly these
@@ -75,6 +95,7 @@ by vehicle (seed 1). Fitted values are in `results/coarse_model_params.json`.
 | `fig_three_layers.py` | `fig_three_layers.pdf` — speed memory, persistence vs stops, path memory, origin | `memory_by_mode_*.csv`, `row_persistence.csv`, `origin_memory_geolife.csv`, `taxi_origin_0.002.csv` |
 | `fig_taxi_gridmode.py` | `fig_taxi_gridmode.pdf` — per-trajectory vs global grid | `../taxi/memory_*.csv` |
 | `fig_geolife_kernel.py` | `geolife_kernel.png` — kernel decay by mode (supplement) | `../geolife/outputs_clean/04_mode_memory/`, `geolife_kernel_window_sensitivity.csv` |
+| `fig_supplement_checks.py` | `fig_s_null_calibration`, `fig_s_reaction_delay`, `fig_s_accel_noise`, `fig_s_stops`, `fig_s_hurst_power` (to-do checks) | the tables of the checks above |
 
 Every figure except `fig_highd_augment.pdf` regenerates pixel-identically from the committed tables.
 `vacf_kernels.npz` was not kept from the original run, so `fig_highd_aug.py` needs one run of

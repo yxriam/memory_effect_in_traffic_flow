@@ -1,0 +1,20 @@
+{
+ "dataset": "pc_L8_I2",
+ "source": "taxi_traj20 pieces; second-order chain + planted dependence on the cell L+1 steps back",
+ "L": 8,
+ "target_bits": 0.2,
+ "gamma": 0.6450194855719382,
+ "planted_bits_calibration": 0.1999999999999998,
+ "beta": 3.0,
+ "z_seed": 2026,
+ "seed": 8002,
+ "md5_tokens": "2572bffc1fdf6434baf7cc1cb0e8a35a",
+ "H_ctx2": 2.5715045191902326,
+ "H_ctx4": 2.581493352380607,
+ "n_test": 155033,
+ "H_full": 2.3697342298817268,
+ "H_short": 2.5735343057913362,
+ "planted_bits": 0.20374102449547452,
+ "share_tilted_steps": 0.8833280656376384,
+ "expected_gap_k4_vs_k128": 0.20177028930850582
+}

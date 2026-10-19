@@ -1,6 +1,7 @@
 {
   "_comment": "Copy this file to local_paths.json (git-ignored) and point each entry at your copy of the data. Delete entries you keep inside the repository's own data folders.",
   "highd_tracks": "D:/data/highD/data",
+  "highd_full": "D:/BaiduNetdiskDownload/highd-dataset-v1.0/data",
   "taxi_raw": "D:/data/taxi/Taxi_070220",
   "geolife_raw": "D:/data/geolife_clean_pipeline/data_raw/Data",
   "geolife_trips_by_mode": "D:/data/geolife_clean_pipeline/data_raw/trips_by_mode_data",

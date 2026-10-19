@@ -1,0 +1,248 @@
+{
+ "geolife": {
+  "units": 50,
+  "runs": 1483,
+  "fpr": 0.011463250168577209,
+  "fpr_unit_q10_q90": [
+   0.0,
+   0.03333333333333333
+  ],
+  "excess_median": -0.000759041750577151,
+  "excess_mean": -0.001086710603941134,
+  "unit_median_excess_median": -0.0008603989018683769,
+  "unit_share_significant_median": 0.0
+ },
+ "taxi": {
+  "units": 50,
+  "runs": 4991,
+  "fpr": 0.030454818673612504,
+  "fpr_unit_q10_q90": [
+   0.01,
+   0.06
+  ],
+  "excess_median": -0.0037076247445947,
+  "excess_mean": -0.0034641865849662726,
+  "unit_median_excess_median": -0.003445844162796525,
+  "unit_share_significant_median": 0.02
+ },
+ "positive": [
+  {
+   "dataset": "geolife",
+   "frac": 0.25,
+   "lam": 0.25,
+   "runs": 50,
+   "steps_median": 33375.5,
+   "true_median": 0.010951825280357763,
+   "excess_median": 0.005719446624734295,
+   "recovery_median": 0.5286416446274442,
+   "detection": 0.6
+  },
+  {
+   "dataset": "geolife",
+   "frac": 0.25,
+   "lam": 0.5,
+   "runs": 50,
+   "steps_median": 33772.0,
+   "true_median": 0.040319538827078394,
+   "excess_median": 0.016369148399484862,
+   "recovery_median": 0.452462765852949,
+   "detection": 0.78
+  },
+  {
+   "dataset": "geolife",
+   "frac": 0.25,
+   "lam": 1.0,
+   "runs": 50,
+   "steps_median": 35129.5,
+   "true_median": 0.13875568927744497,
+   "excess_median": 0.06118517320639691,
+   "recovery_median": 0.46499780715562933,
+   "detection": 0.9
+  },
+  {
+   "dataset": "geolife",
+   "frac": 0.5,
+   "lam": 0.25,
+   "runs": 50,
+   "steps_median": 58954.5,
+   "true_median": 0.012290417809656562,
+   "excess_median": 0.006825905149097589,
+   "recovery_median": 0.7333826046066847,
+   "detection": 0.72
+  },
+  {
+   "dataset": "geolife",
+   "frac": 0.5,
+   "lam": 0.5,
+   "runs": 50,
+   "steps_median": 60105.5,
+   "true_median": 0.044020792812866305,
+   "excess_median": 0.027303637173952955,
+   "recovery_median": 0.6047533097292839,
+   "detection": 0.82
+  },
+  {
+   "dataset": "geolife",
+   "frac": 0.5,
+   "lam": 1.0,
+   "runs": 50,
+   "steps_median": 59074.0,
+   "true_median": 0.1646382477062972,
+   "excess_median": 0.09058307434005958,
+   "recovery_median": 0.5927659255267914,
+   "detection": 0.9
+  },
+  {
+   "dataset": "geolife",
+   "frac": 1.0,
+   "lam": 0.25,
+   "runs": 50,
+   "steps_median": 111683.0,
+   "true_median": 0.011266264215847976,
+   "excess_median": 0.009053090384786633,
+   "recovery_median": 0.7884165241684056,
+   "detection": 0.84
+  },
+  {
+   "dataset": "geolife",
+   "frac": 1.0,
+   "lam": 0.5,
+   "runs": 50,
+   "steps_median": 115771.5,
+   "true_median": 0.04331350387307498,
+   "excess_median": 0.02971188053092172,
+   "recovery_median": 0.7318729816136048,
+   "detection": 0.9
+  },
+  {
+   "dataset": "geolife",
+   "frac": 1.0,
+   "lam": 1.0,
+   "runs": 50,
+   "steps_median": 117316.5,
+   "true_median": 0.16193609945591658,
+   "excess_median": 0.10872031891454906,
+   "recovery_median": 0.701046426159678,
+   "detection": 0.9
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.25,
+   "lam": 0.25,
+   "runs": 220,
+   "steps_median": 66.5,
+   "true_median": 0.0017799986963166498,
+   "excess_median": -0.0045608622974778,
+   "recovery_median": -2.132337105817103,
+   "detection": 0.06363636363636363
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.25,
+   "lam": 0.5,
+   "runs": 220,
+   "steps_median": 66.5,
+   "true_median": 0.006179570726024651,
+   "excess_median": -0.00027738821664165,
+   "recovery_median": -0.07009818676373275,
+   "detection": 0.05909090909090909
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.25,
+   "lam": 1.0,
+   "runs": 220,
+   "steps_median": 66.5,
+   "true_median": 0.0222625025299166,
+   "excess_median": 0.009666569877959951,
+   "recovery_median": 0.35841770577495846,
+   "detection": 0.11818181818181818
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.5,
+   "lam": 0.25,
+   "runs": 250,
+   "steps_median": 126.0,
+   "true_median": 0.0020444149026866,
+   "excess_median": -0.00368436217036805,
+   "recovery_median": -1.6910275575846114,
+   "detection": 0.092
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.5,
+   "lam": 0.5,
+   "runs": 250,
+   "steps_median": 126.0,
+   "true_median": 0.008976131224085,
+   "excess_median": -0.00015586532289840795,
+   "recovery_median": -0.017041012225135505,
+   "detection": 0.092
+  },
+  {
+   "dataset": "taxi",
+   "frac": 0.5,
+   "lam": 1.0,
+   "runs": 250,
+   "steps_median": 126.0,
+   "true_median": 0.0280096101467165,
+   "excess_median": 0.015445886336041749,
+   "recovery_median": 0.4617007280609979,
+   "detection": 0.188
+  },
+  {
+   "dataset": "taxi",
+   "frac": 1.0,
+   "lam": 0.25,
+   "runs": 250,
+   "steps_median": 254.0,
+   "true_median": 0.0021270793036405,
+   "excess_median": -0.0002240399130448,
+   "recovery_median": -0.10940433609340476,
+   "detection": 0.08
+  },
+  {
+   "dataset": "taxi",
+   "frac": 1.0,
+   "lam": 0.5,
+   "runs": 250,
+   "steps_median": 254.0,
+   "true_median": 0.0077668451954466,
+   "excess_median": 0.0064510047127072,
+   "recovery_median": 0.7878342193176135,
+   "detection": 0.168
+  },
+  {
+   "dataset": "taxi",
+   "frac": 1.0,
+   "lam": 1.0,
+   "runs": 250,
+   "steps_median": 254.0,
+   "true_median": 0.0373869828692324,
+   "excess_median": 0.026652342114097602,
+   "recovery_median": 0.7241879250926294,
+   "detection": 0.472
+  }
+ ],
+ "settings": {
+  "units": 50,
+  "rep_neg": {
+   "taxi": 100,
+   "geolife": 30
+  },
+  "pos_units": {
+   "taxi": 25,
+   "geolife": 10
+  },
+  "rep_pos": {
+   "taxi": 10,
+   "geolife": 5
+  },
+  "perm": {
+   "geolife": 50,
+   "taxi": 100
+  }
+ },
+ "seconds": 3106.684758901596
+}

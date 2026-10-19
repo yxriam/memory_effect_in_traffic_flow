@@ -2,6 +2,7 @@
 
   results/neural/neural_<dataset>_<model>.json      -> results/neural/ch5_neural_summary.csv
   results/neural/hist/hist_<dataset>_k<k>_s<seed>.json -> results/ngram/ch5_hist_ablation.csv
+  results/neural/hist/hist_transformer_<dataset>_k<k>_s<seed>.json -> results/ngram/ch5_hist_ablation_transformer.csv
 
 Only the default runs (no --tag suffix) go into ch5_neural_summary.csv; the extra 128-step LSTM seeds
 (neural_taxi_traj20_lstm_s1/_s2.json) are kept as JSON next to it.
@@ -24,10 +25,13 @@ for ds in DATASETS:
 pd.DataFrame(rows).to_csv(P.out(P.PRED_NEURAL / 'ch5_neural_summary.csv'), index=False)
 
 rows = []
-for f in (P.PRED_NEURAL / 'hist').glob('hist_*.json'):
+for f in sorted((P.PRED_NEURAL / 'hist').glob('hist_*.json')):
     d = json.load(open(f))
-    rows.append(dict(dataset=d['dataset'], hist=d['hist'], seed=d['seed'], val_bits=d['val_bits'], test_bits=d['test']['bits'],
-                     acc1=d['test']['acc1'], acc5=d['test']['acc5'], n_test=d['test']['n'], epochs=len(d['history'])))
-H = pd.DataFrame(rows).sort_values(['dataset', 'hist', 'seed'])
-H.to_csv(P.out(P.PRED_NGRAM / 'ch5_hist_ablation.csv'), index=False)
-print(H[['dataset', 'hist', 'seed', 'test_bits']].round(3).to_string(index=False))
+    rows.append(dict(model=d.get('model', 'lstm'), dataset=d['dataset'], hist=d['hist'], seed=d['seed'], val_bits=d['val_bits'],
+                     test_bits=d['test']['bits'], acc1=d['test']['acc1'], acc5=d['test']['acc5'], n_test=d['test']['n'], epochs=len(d['history'])))
+A = pd.DataFrame(rows)
+for model, fn in (('lstm', 'ch5_hist_ablation.csv'), ('transformer', 'ch5_hist_ablation_transformer.csv')):
+    H = A[A.model == model].drop(columns='model').sort_values(['dataset', 'hist', 'seed'])
+    if model == 'transformer' and H.empty: continue
+    H.to_csv(P.out(P.PRED_NGRAM / fn), index=False)
+    print(model); print(H[['dataset', 'hist', 'seed', 'test_bits']].round(3).to_string(index=False))

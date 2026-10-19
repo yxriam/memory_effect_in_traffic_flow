@@ -25,10 +25,16 @@
 | 2026-10-13 – 10-14 | GeoLife 改用官方 1.3 数据后重跑（补记） | GeoLife 1.3 官方下载 | `geolife/` 流程 + controls | 73 项逐项新旧对比；主要数字不变，Hurst 替代序列和自助区间有末位变化（后来查明是随机种子问题，见 2026-10-19） | — | `controls/results/geolife_rerun_comparison.csv` |
 | 2026-10-17 – 10-18 | 预测与记忆网络：n-gram、LSTM / Transformer、历史长度消融、Infomap（补记） | `taxi_traj20`、`geolife_bj500m`、`highd_v20` / `highd_v100` | `prediction/`（GPU：GeForce MX250；Infomap 2.8.0） | 出租车 LSTM 2.90 bits，比 Kneser–Ney 低 0.72；只看 2 步历史的 LSTM 已拿到大部分增益；出租车记忆网络节省 1.11 bits（替代序列 0.37） | 核对论文数字 | [`prediction/README.md`](prediction/README.md) |
 | 2026-10-19 | 论文一四组数字核对与复现 | 上面全部原始数据（GeoLife 缓存 181 个、按方式轨迹 253 个、highD 60 个、出租车 100 辆、prediction 的 npz） | 全量重跑 controls（第 1–3 组）；第 4 组核对 JSON、日志，并重新生成 Infomap 输入 | 第 1–3 组结果文件逐位复现；查出 2 处舍入错误和 1 处措辞问题；修了自助抽样的顺序依赖、3 处 `hash()` 种子和置换次数默认值；`check_paper_numbers.py` 148 项全部一致 | 见下 | [`experiment_log/2026-10-19_paper1_verification.md`](experiment_log/2026-10-19_paper1_verification.md) |
+| 2026-10-19 – 10-20 | 补充分析待办清单（P0-1 – P0-4、P1-1 – P1-3、P1-5、P1-6；P0-5 的数据与 CPU 部分） | GeoLife 缓存 181 个、按方式轨迹 253 个；出租车全部 4,316 条；highD 原始发布版 23 段录像（新键 `highd_full`）；`taxi_traj20` | `controls/` 新增 10 个脚本、`prediction/positive_control.py`、`prediction/taxi_network_controls.py`；Infomap 2.8.0 | 零模型不多报（假阳性 1.1% / 3.0%）但超额 CMI 偏低（回收 70–79%）；highD 剩余记忆是差分噪声，2 s 内无反应延迟峰；无停站片段上方式差异仍在、控制速度后停站系数为正；出租车记忆网络节省大部分来自车辆差异（逐车替代 0.97 对数据 1.11 bits）和 A→B→A 抖动（去抖后 0.18，低于替代）；起点信息在出租车里是车辆和时段的代理；R/S、DFA 在这些长度上功效低；路线约束无直接支持 | P0-5 在本机 GPU 跑；P1-4 本机做；按判据改论文 | [`experiment_log/2026-10-19_paper1_verification.md`](experiment_log/2026-10-19_paper1_verification.md)（第二部分） |
 
 ## 当前的下一步
 
 - [ ] 论文改 4 处（英文版和中文版都改）：GeoLife 完整 LSTM 2.37 → 2.36；highD 100 箱、k = 2 的 LSTM 1.45 → 1.44；§7.2 火车区间 1.11–1.93 → 1.12–1.93；§7.2 “60% / 33% of time”改为分段中位数的说法。详见 2026-10-19 的记录。
+- [ ] 按补充分析的判据改写论文（待办清单 P2-1；2026-10-19 记录第二部分“对论文的影响”）：出租车记忆网络（§4.3）、停站（§7.2）、路线约束与“公交最强”（§7.3）、“purposive”（§7.4）、highD 的 0.076 nats 来源与 0.010 bits 表述、Hurst 改为弱表述；补充图用 `controls/figures/output/fig_s_*.pdf`。
+- [ ] 本机 GPU：`prediction\scripts\run_positive_control.bat`（P0-5 阳性对照 + 真实数据上的 Transformer 历史长度消融），完成后 `python prediction/positive_control.py summary`、`python prediction/summarise_neural.py`，按判据写 P0-5 的结论。
+- [ ] 本机：`local_paths.json` 已加 `highd_full`；用 highD 全部 60 段重跑 `controls/highd_accel_noise.py`、`controls/highd_reaction_delay.py`（及 `--lead-accel`），确认 23 段上的结论不变。
+- [ ] 本机：P1-4 地图匹配（需要 OpenStreetMap 路网）。
 - [ ] 在本机跑一遍 controls 全流程，确认 Windows 下也逐位一致：`python tools/check_paper_numbers.py` 应全部为 match。
-- [ ] 在本机重跑 prediction：`ch6_networks.py taxi`（要读全部 4,316 个出租车文件）和 Infomap 2.8.0；神经网络在 GPU 上重跑，预期与已存结果相差约 0.01 bits。
+- [ ] 在本机重跑 prediction：`ch6_networks.py taxi`（要读全部 4,316 个出租车文件）和 Infomap 2.8.0；神经网络在 GPU 上重跑，预期与已存结果相差约 0.01 bits。（2026-10-20：云端用 Infomap 2.8.0 命令行版重算出租车网络，码长与已提交结果相差 < 0.002 bits，见 `prediction/results/ngram/taxi_network_controls.csv` 的 data 行。）
 - [ ] 可选：多进程脚本的输出行序不固定（数值相同），改为 `imap` 或写出前排序，让 git diff 只显示真实变化。
+- [x] 补充分析待办清单中能在云端做的实验（2026-10-20 完成：P0-1 – P0-4、P1-1 – P1-3、P1-5、P1-6；P0-5 完成数据与 CPU 部分）。
