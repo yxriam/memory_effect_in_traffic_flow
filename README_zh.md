@@ -150,6 +150,8 @@ memory_effect_in_traffic_flow/
 ├── sync_github.bat               Windows：双击即提交全部改动并推送到 GitHub
 ├── local_paths.example.json      原始数据所在位置 → 复制为 local_paths.json（git 忽略）
 ├── common/                       paths.py（所有数据 / 结果位置）· fig_style.py（统一图样式）
+├── EXPERIMENT_LOG.md             每次实验、重跑和核对的统一记录：数据 → 实验 → 结果 → 下一步（详细记录在 experiment_log/）
+├── tools/check_paper_numbers.py  把论文里的每个数字和已提交的结果表逐项比对
 ├── requirements.txt              核心依赖（notebook）      requirements-full.txt  + GeoLife / 机场额外依赖
 ├── highD/                        🚗 高速公路车辆速度
 │   ├── highd_memory_analysis.ipynb        A：马尔可夫阶数（LL / 困惑度 / BIC）  B：LRT  C：VACF + GLE 记忆核
@@ -218,6 +220,8 @@ memory_effect_in_traffic_flow/
 | 图 3 机场桑基图（经芝加哥 / 经 DEN）、RNN 与 LSTM 返回率 | `airports/city_markov_sankey.py`、`airports/lstm_rnn_predict.ipynb` |
 | v2 对照：GeoLife 偏差零模型、highD 状态扩充与粗粒化替代序列、Hurst / 记忆核对照、持续时间与停站、按方式路径记忆、起点记忆 | `controls/*.py` → `controls/results/`，图由 `controls/figures/*.py` 生成（对应表见 `controls/README.md`） |
 | v2 预测：平滑方式比较、学习曲线、LSTM / Transformer、历史长度消融、记忆网络 | `prediction/*.py` → `prediction/results/`，图由 `prediction/figures/*.py` 生成 |
+
+每次重跑之后，运行 `python tools/check_paper_numbers.py`，并在 [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md) 里加一条记录。
 
 修改出租车代码前值得知道的两个实现细节：
 

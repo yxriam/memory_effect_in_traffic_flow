@@ -8,7 +8,7 @@ Taxi (302 sampled vehicles): per-trajectory 20x20 grid (as in the main analysis)
 >= 3 consecutive fixes (~3 min) in one cell, origin = trip start on the 5x5 coarse grid."""
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
-import glob, os, sys, numpy as np, pandas as pd
+import glob, os, sys, zlib, numpy as np, pandas as pd
 from multiprocessing import Pool
 import geolife_robust as gr
 NPERM = 30
@@ -89,7 +89,7 @@ def taxi_vehicle(path):
             if len(cur) >= 6: trips.append((np.array(cur), int(origin)))
             cur = [cell[s]]; origin = coarse[s]
     if len(cur) >= 6: trips.append((np.array(cur), int(origin)))
-    return analyse('tx' + os.path.basename(path), trips, 3, abs(hash(path)) % 2**31)
+    return analyse('tx' + os.path.basename(path), trips, 3, zlib.crc32(os.path.basename(path).encode()))
 
 if __name__ == '__main__':
     gl = sorted(glob.glob(os.path.join(gr.CACHE, '*.npz')))

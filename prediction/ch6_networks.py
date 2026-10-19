@@ -85,10 +85,10 @@ def analyse(label, seqs, trials=2, seed=0):
     return r, (S, first, mem, states, V, mf, mm)
 
 def export_infomap(tag, first, mem, states, V):
-    with open(f'{X}/{tag}_first.net', 'w') as f:
+    with open(f'{X}/{tag}_first.net', 'w', newline='\n') as f:   # LF line ends: byte-identical files on Windows and Linux
         f.write(f'*Vertices {first.n}\n'); f.write(''.join(f'{i + 1} "{i}"\n' for i in range(first.n)))
         f.write('*Arcs\n'); f.write(''.join(f'{a + 1} {b + 1} {x:.10g}\n' for a in range(first.n) for b, x in first.out[a].items()))
-    with open(f'{X}/{tag}_memory.net', 'w') as f:
+    with open(f'{X}/{tag}_memory.net', 'w', newline='\n') as f:
         f.write(f'*Vertices {V}\n'); f.write(''.join(f'{i + 1} "{i}"\n' for i in range(V)))
         f.write('*States\n'); f.write(''.join(f'{s + 1} {mem.phys[s] + 1}\n' for s in range(mem.n)))
         f.write('*Links\n'); f.write(''.join(f'{a + 1} {b + 1} {x:.10g}\n' for a in range(mem.n) for b, x in mem.out[a].items()))

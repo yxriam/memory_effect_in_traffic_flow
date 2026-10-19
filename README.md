@@ -151,6 +151,8 @@ memory_effect_in_traffic_flow/
 ├── sync_github.bat               Windows: double-click to commit everything and push to GitHub
 ├── local_paths.example.json      where your raw data lives → copy to local_paths.json (git-ignored)
 ├── common/                       paths.py (all data / result locations) · fig_style.py (shared figure style)
+├── EXPERIMENT_LOG.md             every experiment, re-run and check: data → experiment → results → next steps (details in experiment_log/)
+├── tools/check_paper_numbers.py  compares every number of the paper with the committed result tables
 ├── requirements.txt              core deps (notebooks)      requirements-full.txt  + GeoLife / airports extras
 ├── highD/                        🚗 highway vehicle speed
 │   ├── highd_memory_analysis.ipynb        A: Markov order (LL / perplexity / BIC)  B: LRT  C: VACF + GLE memory kernel
@@ -219,6 +221,8 @@ read all locations from there (the notebooks and the GeoLife pipeline keep their
 | Fig. 3 airport Sankey diagrams (via Chicago / via DEN), RNN vs LSTM return rates | `airports/city_markov_sankey.py`, `airports/lstm_rnn_predict.ipynb` |
 | v2 controls: GeoLife bias null, highD state augmentation and coarse-graining surrogates, Hurst / kernel controls, persistence vs stops, per-mode path memory, origin memory | `controls/*.py` → `controls/results/`, figures by `controls/figures/*.py` (table in `controls/README.md`) |
 | v2 prediction: smoothing comparison, learning curves, LSTM / Transformer, history-length ablation, memory networks | `prediction/*.py` → `prediction/results/`, figures by `prediction/figures/*.py` |
+
+After re-running anything, run `python tools/check_paper_numbers.py` and add an entry to [`EXPERIMENT_LOG.md`](EXPERIMENT_LOG.md).
 
 Two implementation details worth knowing before you change the taxi code:
 

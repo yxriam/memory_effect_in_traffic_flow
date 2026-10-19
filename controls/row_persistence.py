@@ -15,7 +15,7 @@ def acf(x, maxlag):
 
 def run(args):
     mode, f, gap = args
-    rng = np.random.default_rng(abs(hash((f, gap))) % 2**32)
+    # (an unused random generator seeded with hash() stood here; removed because hash() is not reproducible)
     raw = m4.read_plt(m4.Path(f)); out = []
     user = os.path.basename(f)[:3]
     for i, seg in enumerate(m4.split_by_gap(raw, gap, 30)):

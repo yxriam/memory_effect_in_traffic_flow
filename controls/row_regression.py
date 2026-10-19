@@ -19,7 +19,7 @@ def design(d, terms):
 def fit(d, y, terms, B=1000, seed=0):
     d = d.dropna(subset=[y] + [t for t in terms if t in d.columns])
     X, names = design(d, terms); beta = np.linalg.lstsq(X, d[y].values, rcond=None)[0]
-    users = d.user.unique(); rng = np.random.default_rng(seed); bs = []
+    users = np.sort(d.user.unique()); rng = np.random.default_rng(seed); bs = []   # sorted: independent of the row order of row_persistence.csv
     by = {u: np.where(d.user.values == u)[0] for u in users}
     for _ in range(B):
         idx = np.concatenate([by[u] for u in rng.choice(users, len(users))])

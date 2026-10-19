@@ -19,7 +19,7 @@ Units: the CMI tables built on `geolife_robust.py`'s estimators (`geolife_robust
 ```
 controls/
 ├── *.py                 analyses (run from any folder: python controls/<script>.py)
-├── taxi_pick.json       300 taxi files in random order; taxi_origin.py pools the first 100 usable ones
+├── taxi_pick.json       300 taxi files sorted by file name; taxi_origin.py pools the first 100 usable ones
 ├── results/             every table the scripts write (committed)
 ├── figures/             plotting scripts  → figures/output/ (committed)
 └── work/                large intermediate caches, e.g. highd_states.pkl (git-ignored, rebuilt on demand)
@@ -31,7 +31,7 @@ Data locations come from `../common/paths.py` (see `../local_paths.example.json`
 
 | script | reads | writes (`results/`) |
 |---|---|---|
-| `geolife_robust.py` | GeoLife cache (`geolife_cache`) | `geolife_robust_per_user.csv` — plug-in / null / excess CMI, third order, held-out back-off gain; 4 grids × de-jitter (≈ 30 min on 2 cores) |
+| `geolife_robust.py` | GeoLife cache (`geolife_cache`) | `geolife_robust_per_user.csv` — plug-in / null / excess CMI, third order, held-out back-off gain; 4 grids × de-jitter, 50 permutations (≈ 25–40 min on 2 cores) |
 | `hurst_control.py` | `geolife_trips_by_mode`, `../geolife/04_mode_hurst_memory.py` | `hurst_control.csv` — R/S on data, shuffled, AR(1) surrogate, increments; DFA |
 | `kernel_window.py` | `../geolife/outputs_clean/04_mode_memory/mode_kernel_curves.csv` | `geolife_kernel_window_sensitivity.csv` |
 | `memory_by_mode.py` | `geolife_trips_by_mode` | `memory_by_mode_speed.csv`, `memory_by_mode_path.csv` |
@@ -46,13 +46,16 @@ Data locations come from `../common/paths.py` (see `../local_paths.example.json`
 | `accel_acf.py` | `work/highd_states.pkl` | `highd_accel_acf.csv` |
 | `build_trips_by_mode.py [Data] [out]` | `geolife_raw` (labels.txt) | rebuilds `trips_by_mode_data` into `work/` (never overwrites your copy) |
 
-**Taxi origin memory.** The committed `taxi_origin_*.csv` came from the 100 files of `taxi_pick.json` that had
-been copied to the analysis machine at the time; that subset was not recorded. On a full copy of the data the
-script now pools the first 100 usable files in list order and writes their names to `taxi_origin_<grid>_vehicles.txt`,
-so a re-run reproduces the method and the order of magnitude, not necessarily the last digits.
+**Taxi origin memory.** The committed `taxi_origin_*.csv` came from the first 100 files of `taxi_pick.json`
+(Taxi_106 … Taxi_76698), all of which are usable. The script pools the first 100 usable files in list order and
+writes their names to `taxi_origin_<grid>_vehicles.txt`, so on a full copy of the data it picks exactly these
+files; re-running it on them reproduces both tables digit for digit (86 413 steps at 0.002°, checked 2026-10-19).
 
 `results/geolife_rerun_comparison.csv` records, item by item, the GeoLife numbers before and after the
-re-run on the official GeoLife 1.3 download (2026-10-13/14).
+re-run on the official GeoLife 1.3 download (2026-10-13/14). The small changes it shows in the Hurst surrogates
+and in the bootstrap intervals came from seeds based on Python's `hash()` and from bootstrap draws that followed
+the row order of a multiprocessing run; both are fixed since 2026-10-19 (see `../EXPERIMENT_LOG.md`), so every
+script here now gives the same numbers on every machine.
 
 ### The coarse-graining surrogates (`coarse_model.py`)
 

@@ -20,7 +20,7 @@ from multiprocessing import Pool
 
 CACHE = str(P.GEOLIFE_CACHE)
 GRIDS = [0.0001, 0.0005, 0.001, 0.002]
-N_PERM = int(os.environ.get('N_PERM', 30))
+N_PERM = int(os.environ.get('N_PERM', 50))   # the committed results use 50 permutations (smallest p = 1/51)
 BETAS = [1.0, 3.0, 10.0]
 MIN_TRIGRAMS = 50
 

@@ -9,7 +9,7 @@ Variant 'gap30': segments split at gaps > 30 s instead of 1800 s, so no long int
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
-import sys, importlib.util, glob, os
+import sys, importlib.util, glob, os, zlib
 import numpy as np, pandas as pd
 from multiprocessing import Pool
 spec = importlib.util.spec_from_file_location('m4', str(P.GEOLIFE_PIPELINE / '04_mode_hurst_memory.py')); m4 = importlib.util.module_from_spec(spec); spec.loader.exec_module(m4)
@@ -40,7 +40,8 @@ def ar1(x, rng):
 
 def run(args):
     mode, f, gap = args
-    rng = np.random.default_rng(abs(hash((f, gap))) % 2**32)
+    # seed from the file name and gap: Python's hash() changes between runs and machines, so it is not reproducible
+    rng = np.random.default_rng(zlib.crc32(f'{os.path.basename(f)}|{gap:g}'.encode()))
     raw = m4.read_plt(m4.Path(f)); out = []
     for i, seg in enumerate(m4.split_by_gap(raw, gap, 30)):
         rs = m4.resample_segment(seg, DT)
