@@ -57,6 +57,8 @@ python 99_audit_pipeline.py
 - `01_preprocess_no_leakage.py`: parses GeoLife `.plt` files, validates
   datetime rows, rejects impossible coordinates, keeps trips separate, and
   writes clean per-user caches.
+- `02b_global_numpy.py`: recomputes the pooled GLOBAL row and summary of step 02 with numpy
+  (the dictionary version of step 02 needs more than 7 GB for the 16.5 M pooled transitions).
 - `02_memory_flow_metrics.py`: builds full-flow first- and second-order memory
   metrics from the clean caches.
 - `03_memory_driver_correlation.py`: computes GeoLife user-level driver

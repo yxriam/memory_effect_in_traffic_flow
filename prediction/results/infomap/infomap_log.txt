@@ -1,0 +1,12 @@
+{'network': 'geolife_first', 'codelength': 5.334863941487732, 'one_level_codelength': 10.755093296925773, 'modules': 924, 'physical_nodes': 11420, 'physical_in_multiple_modules': 0}
+{'network': 'geolife_memory', 'codelength': 5.082109417993922, 'one_level_codelength': 10.794503469172392, 'modules': 1579, 'physical_nodes': 11359, 'physical_in_multiple_modules': 3932}
+{'network': 'geolife_surrogate_first', 'codelength': 5.154538760966983, 'one_level_codelength': 10.367812671090578, 'modules': 865, 'physical_nodes': 9157, 'physical_in_multiple_modules': 0}
+{'network': 'geolife_surrogate_memory', 'codelength': 4.680409212671331, 'one_level_codelength': 10.389823587842313, 'modules': 1142, 'physical_nodes': 9045, 'physical_in_multiple_modules': 1611}
+{'network': 'highd_first', 'codelength': 0.8983806906061983, 'one_level_codelength': 4.320485862246781, 'modules': 20, 'physical_nodes': 20, 'physical_in_multiple_modules': 0}
+{'network': 'highd_memory', 'codelength': 0.7513250520308916, 'one_level_codelength': 4.320112054905117, 'modules': 21, 'physical_nodes': 20, 'physical_in_multiple_modules': 18}
+{'network': 'highd_surrogate_first', 'codelength': 0.9029877794349015, 'one_level_codelength': 4.318159352895313, 'modules': 20, 'physical_nodes': 20, 'physical_in_multiple_modules': 0}
+{'network': 'highd_surrogate_memory', 'codelength': 0.9029682749930634, 'one_level_codelength': 4.317945479446879, 'modules': 20, 'physical_nodes': 20, 'physical_in_multiple_modules': 0}
+{'network': 'taxi_first', 'codelength': 6.6623874373852825, 'one_level_codelength': 9.405958136954558, 'modules': 172, 'physical_nodes': 2980, 'physical_in_multiple_modules': 0}
+{'network': 'taxi_memory', 'codelength': 5.553642477202301, 'one_level_codelength': 9.404591527340381, 'modules': 4249, 'physical_nodes': 2976, 'physical_in_multiple_modules': 2076}
+{'network': 'taxi_surrogate_first', 'codelength': 6.6351416864348645, 'one_level_codelength': 9.409704500756739, 'modules': 191, 'physical_nodes': 2832, 'physical_in_multiple_modules': 0}
+{'network': 'taxi_surrogate_memory', 'codelength': 6.261555671634186, 'one_level_codelength': 9.409171212450278, 'modules': 333, 'physical_nodes': 2827, 'physical_in_multiple_modules': 1141}

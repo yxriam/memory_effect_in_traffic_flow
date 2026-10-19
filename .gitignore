@@ -26,3 +26,16 @@ venv/
 Thumbs.db
 *.log
 _audit/
+
+# ---- machine-specific settings (templates: local_paths.example.json, prediction/scripts/local_python.example.bat) ----
+local_paths.json
+prediction/scripts/local_python.bat
+
+# ---- controls/ and prediction/ intermediates (rebuilt by the scripts) ----
+controls/work/
+prediction/data/*.npz
+prediction/infomap_input/
+*.pt
+*.npy
+*_RUNNING.txt
+*_DONE.txt

@@ -8,3 +8,6 @@ torch>=2.0            # only for 91_optional_rnn_lstm_residual.py and airports/l
 # airports/
 pyecharts>=2.0
 plotly>=5.0
+
+# prediction/ (memory networks)
+infomap>=2.0

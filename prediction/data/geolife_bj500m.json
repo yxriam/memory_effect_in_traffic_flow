@@ -1,0 +1,13 @@
+{
+ "dataset": "GeoLife",
+ "state": "Beijing box 39.6-40.3N 115.9-116.9E, 0.005 deg cell, repeats collapsed",
+ "split": "per trip in time 70/10/20",
+ "n_seq": 38248,
+ "n_tokens": 655236,
+ "vocab": 11425,
+ "tokens_by_part": {
+  "train": 459963,
+  "val": 61433,
+  "test": 133840
+ }
+}

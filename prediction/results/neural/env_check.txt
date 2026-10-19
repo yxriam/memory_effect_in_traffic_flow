@@ -1,0 +1,2 @@
+python 3.8.18 (default, Sep 11 2023, 13:47:48) [MSC v.1916 64 bit (AMD64)]
+torch 1.10.0+cu102 cuda True NVIDIA GeForce MX250

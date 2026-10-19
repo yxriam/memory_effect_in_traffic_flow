@@ -1,0 +1,6 @@
+highd_v100 1 0
+highd_v100 4 0
+highd_v100 8 0
+taxi_traj20 16 0
+taxi_traj20 32 1
+taxi_traj20 32 0

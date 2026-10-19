@@ -1,0 +1,30 @@
+# v2.8.0
+# ./Infomap --two-level --directed --flow-model rawdir --num-trials 20 --seed 123 --silent
+# started at 2026-10-17 00:56:20
+# completed in 0.0151334 s
+# partitioned into 2 levels with 20 top modules
+# codelength 0.902988 bits
+# relative codelength savings 79.0886%
+# flow model directed
+# module level 1
+# node_id module flow
+20 1 0.0577144
+9 2 0.0548767
+7 3 0.053896
+14 4 0.0535851
+5 5 0.0533579
+19 6 0.0522442
+8 7 0.0520147
+4 8 0.0513771
+15 9 0.0502244
+18 10 0.0502121
+16 11 0.0493697
+6 12 0.0491428
+3 13 0.0486874
+13 14 0.0486857
+17 15 0.0482681
+2 16 0.0475574
+1 17 0.04543
+10 18 0.0450653
+12 19 0.0445264
+11 20 0.0437647

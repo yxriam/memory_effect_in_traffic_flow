@@ -1,0 +1,13 @@
+{
+ "dataset": "Shanghai taxi",
+ "state": "per-trajectory 20x20 grid, run-length compressed",
+ "split": "per trajectory in time 70/10/20",
+ "n_seq": 6804,
+ "n_tokens": 782034,
+ "vocab": 400,
+ "tokens_by_part": {
+  "train": 546364,
+  "val": 78369,
+  "test": 157301
+ }
+}

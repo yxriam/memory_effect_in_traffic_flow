@@ -85,6 +85,21 @@ LRT（2 vs 1）：G = 1.08 × 10⁶，770 万步，p ≈ 0。VACF 非指数衰�
 <p align="center"><img src="geolife/outputs_clean/figures/fig_geolife_memory_flow_entropy.png" width="85%"></p>
 </details>
 
+<details open>
+<summary><b>表观记忆与真实记忆——针对三类假象的对照（<code>controls/</code>、<code>prediction/</code>）</b></summary>
+
+上面的朴素估计会夸大或掩盖记忆。第二版分析逐一排除三类假象：
+
+| 假象 | 对照 | 结果 |
+|---|---|---|
+| 估计偏差 | 分层置换零模型（GeoLife，10 m 网格） | 代入 CMI 0.346 bits，零模型本身就有 0.325 bits → 超额 **0.012 bits/步**，仍对 66% 的用户显著 |
+| 状态压缩 | 状态中加入更细的速度和加速度（highD，0.2 s） | `v_{t-1}` 的增益：20 箱时 0.076 nats → 100 箱 + 加速度后 **0.007 nats**；在 `v` 上无记忆的 AR(1) 替代序列在 20 箱下已产生约一半增益 |
+| 诊断量偏差 | 滞后 1 自相关相同的 AR(1) 替代序列 | 真实数据 R/S Hurst 0.87–0.96，马尔科夫替代序列 0.83–0.98；记忆核指数随拟合窗口改变 |
+
+剩下的是浅的、基本止于二阶的路径记忆；只看 4 步的 LSTM 对出租车格子的预测与看 128 步的一样好。
+每个脚本 → 表 → 图的对应见 [`controls/README.md`](controls/README.md) 和 [`prediction/README.md`](prediction/README.md)。
+</details>
+
 <details>
 <summary><b>机场 —— BTS DB1B O-D 调查，2024 年第 1 季度（511 407 条路径，436 个机场）</b></summary>
 
@@ -132,6 +147,9 @@ python 05_summarize_results.py               # -> outputs_clean/summary_report.t
 ```
 memory_effect_in_traffic_flow/
 ├── README.md / README_zh.md
+├── sync_github.bat               Windows：双击即提交全部改动并推送到 GitHub
+├── local_paths.example.json      原始数据所在位置 → 复制为 local_paths.json（git 忽略）
+├── common/                       paths.py（所有数据 / 结果位置）· fig_style.py（统一图样式）
 ├── requirements.txt              核心依赖（notebook）      requirements-full.txt  + GeoLife / 机场额外依赖
 ├── highD/                        🚗 高速公路车辆速度
 │   ├── highd_memory_analysis.ipynb        A：马尔可夫阶数（LL / 困惑度 / BIC）  B：LRT  C：VACF + GLE 记忆核
@@ -151,6 +169,16 @@ memory_effect_in_traffic_flow/
 │   ├── README.md · METHODS.md · EXPERIMENT_RESULTS.md
 │   ├── outputs_clean/                     流水线全部输出：记忆流、相关性、按方式记忆、重采样敏感性、图
 │   └── data_raw/Data/                     ← 放 GeoLife 用户文件夹（git 忽略）
+├── controls/                     🧪 表观记忆与真实记忆（v2）：偏差零模型、状态扩充、替代序列、按方式记忆
+│   ├── *.py · README.md                   每个对照一个脚本；README 列出脚本 → 表 → 图
+│   ├── results/                           全部结果表（csv / json）
+│   ├── figures/ → figures/output/         作图脚本与论文图
+│   └── work/                              highd_states.pkl 等大型中间缓存（git 忽略）
+├── prediction/                   🔮 样本外预测与记忆网络（n-gram、LSTM / Transformer、映射方程、Infomap）
+│   ├── *.py · README.md · scripts/*.bat   scripts/ 里是 GPU 与 Infomap 的启动脚本
+│   ├── data/                              符号序列：*.json 入库，*.npz 被 git 忽略
+│   ├── results/ngram · neural · infomap   全部结果表、运行日志与模块划分（不含模型权重）
+│   └── figures/ → figures/output/
 └── airports/                     ✈️ BTS DB1B 航空 O-D 路径
     ├── airports_sequences_split.py        DB1B .asc → 按路径长度分组的机场代码序列
     ├── markov_chain.py                    变阶 MarkovChain（采样 / argmax 预测、滚动生成）
@@ -165,6 +193,9 @@ memory_effect_in_traffic_flow/
 ## 📚 数据集
 
 本仓库不再分发任何原始数据。请从以下来源下载并放入 git 忽略的目录。
+如果数据放在别处，把 `local_paths.example.json` 复制为 `local_paths.json` 并填上各数据的实际路径；
+运行 `python -m common.paths` 会列出每个位置以及找到的文件数。`controls/` 和 `prediction/` 中的脚本都从这里读取路径
+（notebook 和 GeoLife 流水线仍使用各自的相对路径）。
 
 | 数据集 | 用途 | 原始大小 | 放置位置 | 许可 / 获取 |
 |---|---|---|---|---|
@@ -185,6 +216,8 @@ memory_effect_in_traffic_flow/
 | 图 2 / 图 3 出租车 | 同一 notebook → `taxi/figs/` |
 | GeoLife 熵减、相关性热力图、按方式 Hurst / 核 α、5 s 敏感性 | `geolife/` 流水线 → `outputs_clean/`（`summary_report.txt`、`02_memory_flow/`、`03_correlation_analysis/`、`04_mode_memory*/`、`figures/`） |
 | 图 3 机场桑基图（经芝加哥 / 经 DEN）、RNN 与 LSTM 返回率 | `airports/city_markov_sankey.py`、`airports/lstm_rnn_predict.ipynb` |
+| v2 对照：GeoLife 偏差零模型、highD 状态扩充与粗粒化替代序列、Hurst / 记忆核对照、持续时间与停站、按方式路径记忆、起点记忆 | `controls/*.py` → `controls/results/`，图由 `controls/figures/*.py` 生成（对应表见 `controls/README.md`） |
+| v2 预测：平滑方式比较、学习曲线、LSTM / Transformer、历史长度消融、记忆网络 | `prediction/*.py` → `prediction/results/`，图由 `prediction/figures/*.py` 生成 |
 
 修改出租车代码前值得知道的两个实现细节：
 
@@ -199,6 +232,7 @@ memory_effect_in_traffic_flow/
 - 核心：`numpy`、`pandas`、`scipy`、`matplotlib`、`tqdm`、`jupyter`（`requirements.txt`）
 - GeoLife 额外：`scikit-learn`；`91_optional_rnn_lstm_residual.py` 可选需要 `torch`
 - 机场额外：`torch`、`pyecharts`、`plotly`（`requirements-full.txt`）
+- `prediction/` 额外：`torch`（神经网络模型，建议用 GPU）与 `infomap`（记忆网络）
 
 notebook 最近一次在 Python 3.13 / NumPy 2.x 下执行；GeoLife 与机场脚本在 Python 3.8–3.11 下运行。
 

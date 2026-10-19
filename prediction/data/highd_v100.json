@@ -1,0 +1,13 @@
+{
+ "dataset": "highD",
+ "state": "signed speed, 100 equal-frequency bins (train vehicles), dt=0.2 s",
+ "split": "vehicles 70/10/20, seed 0",
+ "n_seq": 110093,
+ "n_tokens": 7882035,
+ "vocab": 100,
+ "tokens_by_part": {
+  "train": 5515611,
+  "val": 789661,
+  "test": 1576763
+ }
+}

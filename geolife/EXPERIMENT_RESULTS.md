@@ -74,23 +74,26 @@ finite-kernel thresholds. The selected interval was 5 seconds.
 | candidate sec | median native-gap coverage | segment coverage | eligible |
 |---:|---:|---:|---|
 | 1 | 18.32% | 1.000 | no |
-| 2 | 82.73% | 0.999 | no |
+| 2 | 79.49% | 0.999 | no |
 | 5 | 96.02% | 0.994 | yes |
 | 10 | 98.31% | 0.988 | yes |
 
 | mode | segments | median Hurst | ACF alpha | kernel alpha |
 |---|---:|---:|---:|---:|
 | airplane | 13 | 0.9892 | 0.4383 | 1.004 |
-| bike | 767 | 0.9065 | 1.215 | 1.011 |
+| bike | 767 | 0.9065 | 1.216 | 1.007 |
 | boat | 3 | 0.9388 | 0.2926 | 0.1464 |
-| bus | 1113 | 0.8665 | 0.949 | 1.542 |
-| car | 696 | 0.9554 | 1.084 | 1.085 |
-| motorcycle | 0 | NA | NA | NA |
-| run | 1 | 0.8782 | 0.8451 | 0.3738 |
-| subway | 338 | 0.9616 | 0.6253 | 0.61 |
-| taxi | 220 | 0.9367 | 1.289 | 0.667 |
-| train | 127 | 0.9840 | 0.4856 | 0.7085 |
-| walk | 1489 | 0.8876 | 0.7413 | 1.484 |
+| bus | 1113 | 0.8665 | 0.949 | 1.549 |
+| car | 696 | 0.9554 | 1.084 | 1.107 |
+| subway | 338 | 0.9616 | 0.6253 | 0.5807 |
+| taxi | 220 | 0.9367 | 1.29 | 0.6333 |
+| train | 127 | 0.9840 | 0.4856 | 0.7084 |
+| walk | 1489 | 0.8876 | 0.7413 | 1.496 |
 
-Modes with very few segments, especially motorcycle, run, boat, and airplane,
-should be presented cautiously.
+Modes with very few segments, especially boat and airplane, should be presented cautiously.
+motorcycle and run (2–4 users each) are not part of the mode set.
+
+Values above are from the 2026-10-14 re-run on the official GeoLife 1.3 download
+(`trips_by_mode_data` rebuilt with `../controls/build_trips_by_mode.py`). Compared with the
+earlier run only the kernel exponents moved (e.g. bus 1.542 → 1.549, subway 0.610 → 0.581);
+Hurst exponents, segment counts and the memory-flow entropies are unchanged.

@@ -31,13 +31,11 @@ Correlation analysis:
 Mode memory:
   selected resample interval = 5 s
   airplane: segments=13, H=0.9892, acf_alpha=0.4383, kernel_alpha=1.004
-  bike: segments=767, H=0.9065, acf_alpha=1.215, kernel_alpha=1.011
+  bike: segments=767, H=0.9065, acf_alpha=1.216, kernel_alpha=1.007
   boat: segments=3, H=0.9388, acf_alpha=0.2926, kernel_alpha=0.1464
-  bus: segments=1113, H=0.8665, acf_alpha=0.949, kernel_alpha=1.542
-  car: segments=696, H=0.9554, acf_alpha=1.084, kernel_alpha=1.085
-  motorcycle: segments=0, H=NA, acf_alpha=NA, kernel_alpha=NA
-  run: segments=1, H=0.8782, acf_alpha=0.8451, kernel_alpha=0.3738
-  subway: segments=338, H=0.9616, acf_alpha=0.6253, kernel_alpha=0.61
-  taxi: segments=220, H=0.9367, acf_alpha=1.289, kernel_alpha=0.667
-  train: segments=127, H=0.984, acf_alpha=0.4856, kernel_alpha=0.7085
-  walk: segments=1489, H=0.8876, acf_alpha=0.7413, kernel_alpha=1.484
+  bus: segments=1113, H=0.8665, acf_alpha=0.949, kernel_alpha=1.549
+  car: segments=696, H=0.9554, acf_alpha=1.084, kernel_alpha=1.107
+  subway: segments=338, H=0.9616, acf_alpha=0.6253, kernel_alpha=0.5807
+  taxi: segments=220, H=0.9367, acf_alpha=1.29, kernel_alpha=0.6333
+  train: segments=127, H=0.984, acf_alpha=0.4856, kernel_alpha=0.7084
+  walk: segments=1489, H=0.8876, acf_alpha=0.7413, kernel_alpha=1.496

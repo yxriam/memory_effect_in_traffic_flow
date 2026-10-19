@@ -86,6 +86,21 @@ Second-order memory is real (CMI significant, robust to a global instead of per-
 <p align="center"><img src="geolife/outputs_clean/figures/fig_geolife_memory_flow_entropy.png" width="85%"></p>
 </details>
 
+<details open>
+<summary><b>Apparent vs genuine memory — controls for three artefacts (<code>controls/</code>, <code>prediction/</code>)</b></summary>
+
+Naive estimates above overstate or hide memory. The second version of the analysis removes three artefacts one by one:
+
+| artefact | control | result |
+|---|---|---|
+| estimation bias | stratified permutation null (GeoLife, 10 m grid) | plug-in CMI 0.346 bits, null alone 0.325 bits → excess **0.012 bits/step**, still significant for 66 % of users |
+| state compression | finer speed + acceleration in the state (highD, 0.2 s) | gain from `v_{t-1}`: 0.076 nats at 20 bins → **0.007 nats** with 100 bins + acceleration; an AR(1) surrogate (Markov in `v`) already gives about half of the 20-bin gain |
+| biased diagnostics | AR(1) surrogates with the same lag-1 autocorrelation | R/S Hurst 0.87–0.96 on data vs 0.83–0.98 on Markov surrogates; kernel exponents change with the fitting window |
+
+What remains is shallow, essentially second-order path memory; an LSTM that sees 4 steps predicts taxi cells as well as one that sees 128.
+Details and every script → table → figure: [`controls/README.md`](controls/README.md), [`prediction/README.md`](prediction/README.md).
+</details>
+
 <details>
 <summary><b>Airports — BTS DB1B O-D survey, 2024 Q1 (511 407 paths, 436 airports)</b></summary>
 
@@ -133,6 +148,9 @@ Shipped `geolife/outputs_clean/` already contains every CSV and figure produced 
 ```
 memory_effect_in_traffic_flow/
 ├── README.md / README_zh.md
+├── sync_github.bat               Windows: double-click to commit everything and push to GitHub
+├── local_paths.example.json      where your raw data lives → copy to local_paths.json (git-ignored)
+├── common/                       paths.py (all data / result locations) · fig_style.py (shared figure style)
 ├── requirements.txt              core deps (notebooks)      requirements-full.txt  + GeoLife / airports extras
 ├── highD/                        🚗 highway vehicle speed
 │   ├── highd_memory_analysis.ipynb        A: Markov order (LL / perplexity / BIC)  B: LRT  C: VACF + GLE memory kernel
@@ -152,6 +170,16 @@ memory_effect_in_traffic_flow/
 │   ├── README.md · METHODS.md · EXPERIMENT_RESULTS.md
 │   ├── outputs_clean/                     all pipeline outputs: memory-flow, correlations, per-mode memory, resampling sensitivity, figures
 │   └── data_raw/Data/                     ← put GeoLife user folders here (git-ignored)
+├── controls/                     🧪 apparent vs genuine memory (v2): bias nulls, state augmentation, surrogates, per-mode memory
+│   ├── *.py · README.md                   one script per control; README maps script → table → figure
+│   ├── results/                           all tables (csv / json)
+│   ├── figures/ → figures/output/         plotting scripts and the paper figures
+│   └── work/                              large caches such as highd_states.pkl (git-ignored)
+├── prediction/                   🔮 held-out prediction and memory networks (n-gram, LSTM / Transformer, map equation, Infomap)
+│   ├── *.py · README.md · scripts/*.bat   GPU / Infomap launchers in scripts/
+│   ├── data/                              token sequences: *.json committed, *.npz git-ignored
+│   ├── results/ngram · neural · infomap   all tables, run logs and module assignments (no model weights)
+│   └── figures/ → figures/output/
 └── airports/                     ✈️ BTS DB1B airline O-D paths
     ├── airports_sequences_split.py        DB1B .asc → airport-code sequences grouped by path length
     ├── markov_chain.py                    variable-order MarkovChain (sampled / arg-max prediction, rollouts)
@@ -166,6 +194,9 @@ memory_effect_in_traffic_flow/
 ## 📚 Datasets
 
 None of the raw data is redistributed in this repository. Download it from the sources below and drop it into the git-ignored folders.
+If you keep the data elsewhere, copy `local_paths.example.json` to `local_paths.json` and point each entry at your copy;
+`python -m common.paths` prints every location and how many files it found. The scripts in `controls/` and `prediction/`
+read all locations from there (the notebooks and the GeoLife pipeline keep their own relative paths).
 
 | Dataset | Used for | Size (raw) | Where to put it | Licence / access |
 |---|---|---|---|---|
@@ -186,6 +217,8 @@ None of the raw data is redistributed in this repository. Download it from the s
 | Fig. 2 / Fig. 3 taxi | same notebook → `taxi/figs/` |
 | GeoLife entropy reduction, correlation heat-maps, Hurst / kernel-α by mode, 5 s sensitivity | `geolife/` pipeline → `outputs_clean/` (`summary_report.txt`, `02_memory_flow/`, `03_correlation_analysis/`, `04_mode_memory*/`, `figures/`) |
 | Fig. 3 airport Sankey diagrams (via Chicago / via DEN), RNN vs LSTM return rates | `airports/city_markov_sankey.py`, `airports/lstm_rnn_predict.ipynb` |
+| v2 controls: GeoLife bias null, highD state augmentation and coarse-graining surrogates, Hurst / kernel controls, persistence vs stops, per-mode path memory, origin memory | `controls/*.py` → `controls/results/`, figures by `controls/figures/*.py` (table in `controls/README.md`) |
+| v2 prediction: smoothing comparison, learning curves, LSTM / Transformer, history-length ablation, memory networks | `prediction/*.py` → `prediction/results/`, figures by `prediction/figures/*.py` |
 
 Two implementation details worth knowing before you change the taxi code:
 
@@ -200,6 +233,7 @@ Two implementation details worth knowing before you change the taxi code:
 - Core: `numpy`, `pandas`, `scipy`, `matplotlib`, `tqdm`, `jupyter` (`requirements.txt`)
 - GeoLife extras: `scikit-learn`; optional `torch` for `91_optional_rnn_lstm_residual.py`
 - Airports extras: `torch`, `pyecharts`, `plotly` (`requirements-full.txt`)
+- `prediction/` extras: `torch` (neural models, GPU recommended) and `infomap` (memory networks)
 
 The notebooks were last executed with Python 3.13 / NumPy 2.x; the GeoLife and airport scripts with Python 3.8–3.11.
 
@@ -212,7 +246,7 @@ If you use this code, please cite the accompanying paper (preprint in preparatio
 ```bibtex
 @unpublished{yang2026memory,
   title   = {Quantifying memory effects in traffic flows},
-  author  = {Yang, Xiaoran and collaborators},
+  author  = {Yang, Xinran and Ren, Zhuoming},
   note    = {Alibaba Business School, Hangzhou Normal University. Manuscript in preparation.
              Code: https://github.com/yxriam/memory_effect_in_traffic_flow},
   year    = {2026}

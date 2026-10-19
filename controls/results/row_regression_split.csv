@@ -1,0 +1,27 @@
+,coef,ci_lo,ci_hi,y,model
+const,4.294,4.206,4.458,log_tau,modes only
+is_subway,-0.866,-1.207,-0.402,log_tau,modes only
+is_train,0.812,0.463,0.965,log_tau,modes only
+is_bus,-1.01,-1.217,-0.806,log_tau,modes only
+is_bike,-1.322,-1.656,-0.734,log_tau,modes only
+is_walk,-1.744,-1.906,-1.609,log_tau,modes only
+const,3.398,3.103,3.807,log_tau,+ speed
+is_subway,-0.599,-0.94,-0.325,log_tau,+ speed
+is_train,0.495,0.102,0.659,log_tau,+ speed
+is_bus,-0.738,-1.014,-0.518,log_tau,+ speed
+is_bike,-0.84,-1.222,-0.261,log_tau,+ speed
+is_walk,-0.862,-1.23,-0.619,log_tau,+ speed
+log_speed,0.377,0.241,0.496,log_tau,+ speed
+const,1.867,1.779,1.947,z_phi,modes only
+is_subway,-0.372,-0.692,-0.143,z_phi,modes only
+is_train,0.466,0.184,0.604,z_phi,modes only
+is_bus,-0.433,-0.534,-0.331,z_phi,modes only
+is_bike,-1.021,-1.189,-0.716,z_phi,modes only
+is_walk,-1.228,-1.309,-1.132,z_phi,modes only
+const,1.212,1.035,1.426,z_phi,+ speed
+is_subway,-0.177,-0.479,-0.017,z_phi,+ speed
+is_train,0.236,-0.065,0.358,z_phi,+ speed
+is_bus,-0.234,-0.361,-0.14,z_phi,+ speed
+is_bike,-0.669,-0.869,-0.367,z_phi,+ speed
+is_walk,-0.583,-0.77,-0.457,z_phi,+ speed
+log_speed,0.275,0.204,0.344,z_phi,+ speed
