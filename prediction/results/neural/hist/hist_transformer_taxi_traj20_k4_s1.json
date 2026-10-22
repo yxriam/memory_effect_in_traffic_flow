@@ -1,0 +1,97 @@
+{
+ "dataset": "taxi_traj20",
+ "model": "transformer",
+ "hist": 4,
+ "seed": 1,
+ "val_bits": 2.9647905488379473,
+ "test": {
+  "bits": 2.844301243206913,
+  "n": 155033,
+  "acc1": 0.35714976811388544,
+  "acc5": 0.8714467242458057
+ },
+ "args": {
+  "data": "data\\taxi_traj20.npz",
+  "hist": 4,
+  "model": "transformer",
+  "heads": 4,
+  "emb": 128,
+  "hid": 256,
+  "layers": 2,
+  "dropout": 0.2,
+  "lr": 0.001,
+  "batch": 512,
+  "epochs": 25,
+  "patience": 2,
+  "per_epoch": 300000,
+  "max_val": 150000,
+  "seed": 1,
+  "out": "D:\\documents\\HZNU\\project\\memory_effect_in_traffic_flow\\prediction\\results\\neural\\hist",
+  "stop_after": 0
+ },
+ "history": [
+  {
+   "epoch": 0,
+   "train_loss": 2.61486605592962,
+   "val_bits": 3.420892074463286,
+   "sec": 34.225045919418335
+  },
+  {
+   "epoch": 1,
+   "train_loss": 2.1145520859204057,
+   "val_bits": 3.210334275681584,
+   "sec": 66.59345245361328
+  },
+  {
+   "epoch": 2,
+   "train_loss": 2.0228581037944493,
+   "val_bits": 3.1082890445835276,
+   "sec": 99.06710624694824
+  },
+  {
+   "epoch": 3,
+   "train_loss": 1.9667665071454878,
+   "val_bits": 3.055319584323889,
+   "sec": 131.50211000442505
+  },
+  {
+   "epoch": 4,
+   "train_loss": 1.925317364341163,
+   "val_bits": 3.029244505284043,
+   "sec": 163.89637279510498
+  },
+  {
+   "epoch": 5,
+   "train_loss": 1.8956937167424797,
+   "val_bits": 2.9988946216957535,
+   "sec": 196.29590725898743
+  },
+  {
+   "epoch": 6,
+   "train_loss": 1.8803084958535412,
+   "val_bits": 2.9647905488379473,
+   "sec": 228.705393075943
+  },
+  {
+   "epoch": 7,
+   "train_loss": 1.8610660881312633,
+   "val_bits": 2.9649190428231735,
+   "sec": 261.1398506164551
+  },
+  {
+   "epoch": 8,
+   "train_loss": 1.8532678808368515,
+   "val_bits": 2.967093714138522,
+   "sec": 293.5544307231903
+  }
+ ],
+ "env": {
+  "python": "3.8.18",
+  "torch": "1.10.0+cu102",
+  "numpy": "1.24.3",
+  "cuda": "10.2",
+  "cudnn": 7605,
+  "device": "NVIDIA GeForce MX250",
+  "platform": "Windows-10-10.0.26100-SP0"
+ }
+}

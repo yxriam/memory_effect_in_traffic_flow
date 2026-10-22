@@ -7,6 +7,9 @@ Each row: the number as printed in the paper, the value re-computed from the com
 'match' if the value rounds to the printed number. Run it after re-running any analysis and paste the summary
 line into the experiment log (EXPERIMENT_LOG.md). The expected values already include the corrections found on
 2026-10-19 (GeoLife LSTM 2.36, highD-100 k=2 LSTM 1.44, train interval 1.12; see experiment_log/).
+Group '5 checks' covers the supplementary checks added to the paper on 2026-10-20 (v3); its expected values include
+the four rounding fixes of that day (bike 20 %, Table 5 savings 1.109 and 0.363, bus DFA 4 %), and since 2026-10-22
+the positive control of the history ablation (P0-5).
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths
@@ -217,6 +220,213 @@ if p.exists():
     item('4 network', 'highD: return predicted by first-order chain', '6', 100 * r['p_return_first_order_chain'], 0, ' %')
     ROWS.append(dict(group='4 network', item='highD: move on to a third bin', paper='< 1 %', recomputed=f"{100 * r['p_third_bin']:.2f} %",
                      status='match' if r['p_third_bin'] < 0.01 else 'MISMATCH'))
+
+# ---- 5: supplementary checks added to the paper on 2026-10-20 (v3; Appendix B, Sections 4.1, 4.4, 5.4, 6.4, 7.2-7.4, 8.3)
+G5 = '5 checks'
+def rj(name):
+    p = paths.CONTROLS_RESULTS / name
+    return json.load(open(p)) if p.exists() else None
+
+s = rj('null_calibration_summary.json')                                        # P0-1
+if s is not None:
+    item(G5, 'null calibration: GeoLife false-positive rate', '1.1', 100 * s['geolife']['fpr'], 1, ' %')
+    item(G5, 'null calibration: GeoLife negative runs', '1483', s['geolife']['runs'], 0)
+    item(G5, 'null calibration: GeoLife median excess (negative)', '-0.0008', s['geolife']['excess_median'], 4, ' bits')
+    item(G5, 'null calibration: taxi false-positive rate', '3.0', 100 * s['taxi']['fpr'], 1, ' %')
+    item(G5, 'null calibration: taxi negative runs', '4991', s['taxi']['runs'], 0)
+    P = pd.DataFrame(s['positive'])
+    gl, tx = P[P.dataset == 'geolife'], P[P.dataset == 'taxi']
+    item(G5, 'recovery, GeoLife all data: min over lambda', '70', 100 * gl[gl.frac == 1].recovery_median.min(), 0, ' %')
+    item(G5, 'recovery, GeoLife all data: max over lambda', '79', 100 * gl[gl.frac == 1].recovery_median.max(), 0, ' %')
+    item(G5, 'recovery, GeoLife quarter of data: min', '45', 100 * gl[gl.frac == .25].recovery_median.min(), 0, ' %')
+    item(G5, 'recovery, GeoLife quarter of data: max', '53', 100 * gl[gl.frac == .25].recovery_median.max(), 0, ' %')
+    item(G5, 'taxi true I2 (all data): min over lambda', '0.002', tx[tx.frac == 1].true_median.min(), 3, ' nats')
+    item(G5, 'taxi true I2 (all data): max over lambda', '0.037', tx[tx.frac == 1].true_median.max(), 3, ' nats')
+    item(G5, 'taxi recovery, lambda 0.25, quarter of data', '-2.1', tx[(tx.frac == .25) & (tx.lam == .25)].recovery_median.iloc[0], 1)
+    g0 = rd('geolife_robust_per_user.csv')
+    if g0 is not None:
+        e10 = g0[np.isclose(g0.grid, 0.0001) & (g0.dejitter.astype(int) == 0)]
+        item(G5, 'GeoLife excess / 0.7 (genuine memory at recovery 0.7)', '0.017', e10.cmi2_excess.median() / 0.7, 3, ' bits')
+        item(G5, 'same as share of the median plug-in CMI', '5', 100 * e10.cmi2_excess.median() / 0.7 / e10.cmi2_plugin.median(), 0, ' %')
+
+gn = rd('highd_accel_noise_gains.csv'); ac = rd('highd_accel_noise_acf.csv')   # P0-3
+if gn is not None:
+    gn = gn[gn.state == 'signed_v'].set_index(gn.columns[0])
+    co, re = gn.loc['coarse: V2(20,20) - V1(20)'], gn.loc['residual after a: VA2 - VA']
+    item(G5, 'highD 23 rec.: coarse gain, backward differences', '0.078', co.bd, 3, ' nats')
+    item(G5, 'highD 23 rec.: residual after a_t, backward differences', '0.0062', re.bd, 4, ' nats')
+    for col, v in [('ds', '-0.0027'), ('sg15', '0.0013'), ('sg21', '-0.0015'), ('sg25', '-0.0025')]:
+        item(G5, f'highD residual after a_t, {col}', v, re[col], 4, ' nats')
+    item(G5, 'coarse gain with smoothed speeds: min (dataset v)', '0.0002', co[['ds', 'sg15', 'sg21', 'sg25']].min(), 4, ' nats')
+    item(G5, 'coarse gain with smoothed speeds: max (S-G 0.6 s)', '0.0083', co[['ds', 'sg15', 'sg21', 'sg25']].max(), 4, ' nats')
+if ac is not None:
+    a1 = ac[ac.lag == 1].set_index('definition').acf
+    for col, v in [('bd', '-0.32'), ('sg15', '0.14'), ('sg21', '0.58'), ('sg25', '0.75')]:
+        item(G5, f'highD lag-1 autocorrelation of a, {col}', v, a1[col], 2)
+# (the 1.45 million steps and 24,804 vehicles are printed by highd_accel_noise.py, not stored in a result file)
+
+def delay_excess(suf, hz, var='dv', lag=2.0):                                  # P0-2: mean gain over splits minus null mean, bits
+    G = rd(f'highd_reaction_delay{suf}.csv'); N = rd(f'highd_reaction_delay{suf}_null.csv')
+    if G is None or N is None: return None
+    gg = G[(G.horizon_s == hz) & (G.added == var) & np.isclose(G.lag_s, lag)].gain_nats.mean()
+    return (gg - N[(N.horizon_s == hz) & (N.added == var) & np.isclose(N.lag_s, lag)].gain_nats.mean()) / LN2
+for hz, v in [(0.2, '0.003'), (1.0, '0.019'), (2.0, '0.018')]:
+    item(G5, f'leader dv 2 s back above null, horizon {hz:g} s', v, delay_excess('', hz), 3, ' bits')
+for hz, v in [(1.0, '0.005'), (2.0, '0.003')]:
+    item(G5, f'same with leader acceleration in the state, horizon {hz:g} s', v, delay_excess('_leadacc', hz), 3, ' bits')
+la = rd('highd_reaction_delay_leadacc.csv')
+if la is not None:
+    for hz, v in [(1.0, '0.006'), (2.0, '0.018')]:
+        item(G5, f'gain of the leader acceleration itself, horizon {hz:g} s', v, la[(la.horizon_s == hz) & (la.added == 'a_lead')].gain_bits.mean(), 3, ' bits')
+kn = rd('highd_reaction_delay_leadacc_knn.csv')
+if kn is not None:
+    ROWS.append(dict(group=G5, item='kNN CMI with leader acceleration: significant cells', paper='none', recomputed=f'{(kn.p < .05).sum()} of {len(kn)}',
+                     status='match' if (kn.p < .05).sum() == 0 else 'MISMATCH'))
+
+s = rj('stops_tautology_summary.json')                                          # P0-4
+if s is not None:
+    sf = {r['mode']: r['tau_median'] for r in s['stop_free']['by_mode']}
+    item(G5, 'stop-free 300 s windows: median tau_c walk', '5', sf['walk'], 0, ' s')
+    item(G5, 'stop-free: median tau_c train', '40', sf['train'], 0, ' s')
+    item(G5, 'stop-free: min of the other five modes', '10', min(sf[m] for m in ['bike', 'bus', 'subway', 'car', 'taxi']), 0, ' s')
+    item(G5, 'stop-free: max of the other five modes', '25', max(sf[m] for m in ['bike', 'bus', 'subway', 'car', 'taxi']), 0, ' s')
+    item(G5, 'eta^2 of log tau_c, stop-free windows', '47', 100 * s['stop_free']['eta2_log_tau'], 0, ' %')
+    item(G5, 'eta^2 of log tau_c, all windows', '37', 100 * s['whole']['eta2_log_tau'], 0, ' %')
+    ab = {r['mode']: r['ratio_median'] for r in s['ar1_bias']['by_mode']}
+    item(G5, 'AR(1) bias ratio, walk', '1.00', ab['walk'], 2); item(G5, 'AR(1) bias ratio, train', '0.58', ab['train'], 2)
+    item(G5, 'cross-mode rho after bias correction', '-0.96', s['ar1_bias']['spearman_corrected'][0], 2)
+lm = rd('stops_lmm.csv')
+if lm is not None:
+    t = lm.set_index(['model', 'term'])
+    full, nosp = t.loc['speed + stops + length + mode'], t.loc['stops + length + mode']
+    item(G5, 'LMM stops coefficient without speed', '-0.14', nosp.loc['log1p_stops_per_km', 'coef'], 2)
+    item(G5, 'its s.e.', '0.03', nosp.loc['log1p_stops_per_km', 'se'], 2)
+    item(G5, 'LMM stops coefficient with speed', '0.27', full.loc['log1p_stops_per_km', 'coef'], 2)
+    item(G5, 'its s.e.', '0.04', full.loc['log1p_stops_per_km', 'se'], 2)
+    for m, v in [('walk', '0.51'), ('bike', '0.64'), ('bus', '0.55'), ('subway', '0.67')]:
+        item(G5, f'LMM factor relative to car, {m}', v, full.loc[f'mode_{m}', 'factor'], 2)
+    item(G5, 'LMM segments', '2599', full.n.iloc[0], 0); item(G5, 'LMM users', '34', full.users.iloc[0], 0)
+
+ns = rd('nonstationarity_geolife.csv')                                          # P1-1 GeoLife
+if ns is not None:
+    u = ns[ns.level == 'user x mode']
+    item(G5, 'user x mode: median excess, original strata', '0.074', u.excess.median(), 3, ' bits')
+    item(G5, 'user x mode: median excess, strata x trip type', '0.011', u.excess_type.median(), 3, ' bits')
+    item(G5, 'user x mode: median excess, shuffled trip type', '0.015', u.excess_shuffled_type.median(), 3, ' bits')
+    item(G5, 'share of the excess due to trip-type switching (sums)', '27', 100 * (u.excess_shuffled_type.sum() - u.excess_type.sum()) / u.excess.sum(), 0, ' %')
+
+re_ = rd('route_equal_sample.csv')                                              # P1-6
+if re_ is not None:
+    rel = re_.groupby(['mode', 'draw']).rel_excess.median().groupby('mode').mean()
+    for m, v in [('subway', '22'), ('bike', '20'), ('bus', '10'), ('walk', '8'), ('taxi', '6'), ('car', '4'), ('train', '0')]:
+        item(G5, f'equal samples: relative excess, {m}', v, 100 * rel[m], 0, ' %')
+rc, rw = rd('route_cells.csv'), rd('route_branching_wls.csv')
+if rc is not None: item(G5, 'cells visited >= 20 times', '4249', len(rc), 0)
+if rw is not None:
+    b = rw[(rw.model == 'branching + mode') & (rw.term == 'log2_branching')].iloc[0]
+    item(G5, 'log2 branching coefficient', '0.07', b.coef, 2); item(G5, 'its 95% interval, low', '-0.06', b.lo, 2); item(G5, 'its 95% interval, high', '0.15', b.hi, 2)
+
+og, ot = rd('origin_direction_geolife.csv'), rd('origin_direction_taxi.csv')    # P1-2
+if og is not None:
+    from scipy.stats import wilcoxon
+    item(G5, 'GeoLife users in the trip-level test', '153', len(og), 0)
+    im_ = [og[f'I_{m}'].median() for m in (5, 10, 20)]                       # printed as "about 0.0024 bits" for m = 5, 10, 20
+    ROWS.append(dict(group=G5, item='GeoLife median I_5, I_10, I_20 ("about 0.0024")', paper='0.0024 bits', recomputed=' / '.join(f'{x:.4f}' for x in im_),
+                     status='match' if all(abs(x - 0.0024) <= 0.00015 for x in im_) else 'MISMATCH'))
+    item(G5, 'GeoLife median origin CMI given 3 cells and S_t-10', '0.0000', og['I_O|3,10'].median(), 4, ' bits')
+    item(G5, 'GeoLife paired Wilcoxon, real vs shuffled S_t-10', '0.29', wilcoxon(og['I_O|3,10'], og['I_O|3,10shuf']).pvalue, 2)
+if ot is not None:
+    o = ot.iloc[0]
+    for m, v in [(5, '0.0013'), (10, '0.0004'), (20, '0.0003')]:
+        item(G5, f'taxi I_{m}', v, o[f'I_{m}'], 4, ' bits')
+    item(G5, 'taxi origin CMI given 3 cells and S_t-10', '0.00003', o['I_O|3,10'], 5, ' bits'); item(G5, 'its p', '0.13', o['p_I_O|3,10'], 2)
+    item(G5, 'taxi origin CMI given 3 cells, vehicle, period: p', '1', o['p_I_O|3,veh,per'], 0)
+    item(G5, 'same strata shuffled', '0.0004', o['I_O|3,veh,per shuf'], 4, ' bits'); item(G5, 'its p', '0.005', o['p_I_O|3,veh,per shuf'], 3)
+
+dj, dd = rd('taxi_dejitter_summary.csv'), rd('taxi_dejitter.csv')               # P1-5 (CMI)
+if dj is not None and dd is not None:
+    pv = dd.pivot_table(index='file', columns='variant', values=['comp_len', 'cmi2_excess', 'cmi2_p', 'dll_2v1'])
+    both = pv.dropna()
+    item(G5, 'de-jitter: trajectories with >= 50 states in both', '2195', len(both), 0)
+    item(G5, 'de-jitter: median share of compressed states removed', '29', 100 * (1 - both.comp_len.dejittered / both.comp_len.published).median(), 0, ' %')
+    item(G5, 'de-jitter: median excess I2, original (paired)', '0.0276', both.cmi2_excess.published.median(), 4, ' nats')
+    item(G5, 'de-jitter: median excess I2, de-jittered', '0.0251', both.cmi2_excess.dejittered.median(), 4, ' nats')
+    item(G5, 'de-jitter: paired Wilcoxon p', '0.14', dj.wilcoxon_p_cmi2.iloc[0], 2)
+    item(G5, 'de-jitter: significant share, original (paired)', '56.0', 100 * (both.cmi2_p.published < .05).mean(), 1, ' %')
+    item(G5, 'de-jitter: significant share, de-jittered', '56.5', 100 * (both.cmi2_p.dejittered < .05).mean(), 1, ' %')
+    item(G5, 'de-jitter: median held-out gain, original (paired)', '0.0088', both.dll_2v1.published.median(), 4, ' nats')
+    item(G5, 'de-jitter: median held-out gain, de-jittered', '0.0077', both.dll_2v1.dejittered.median(), 4, ' nats')
+
+nc = paths.PRED_NGRAM / 'taxi_network_controls.csv'                            # P1-1 / P1-5 (memory network)
+if nc.exists():
+    nc = pd.read_csv(nc); K = nc.groupby('kind')
+    sav, red, sh, st = K.saving.mean(), K.entropy_rate_reduction.mean(), K.share_multi_module.mean(), K.steps.mean()
+    for k, v in [('data', '1.109'), ('pooled_surrogate', '0.363'), ('per_vehicle_surrogate', '0.971'), ('dejittered', '0.183'),
+                 ('dejittered_pooled_surrogate', '0.420'), ('dejittered_per_vehicle_surrogate', '0.330')]:
+        item(G5, f'Table 5 saving: {k}', v, sav[k], 3, ' bits')
+    for k, v in [('pooled_surrogate', '0.017'), ('per_vehicle_surrogate', '0.003'), ('dejittered_pooled_surrogate', '0.004'), ('dejittered_per_vehicle_surrogate', '0.005')]:
+        item(G5, f'Table 5 saving s.d.: {k}', v, K.saving.std(ddof=1)[k], 3, ' bits')
+    for k, v in [('data', '44.2'), ('pooled_surrogate', '12.7'), ('per_vehicle_surrogate', '33.3'), ('dejittered', '34.1'),
+                 ('dejittered_pooled_surrogate', '8.6'), ('dejittered_per_vehicle_surrogate', '19.4')]:
+        item(G5, f'Table 5 1-H2/H1: {k}', v, 100 * red[k], 1, ' %')
+    for k, v in [('data', '69.5'), ('pooled_surrogate', '40.0'), ('per_vehicle_surrogate', '68.1'), ('dejittered', '65.6'),
+                 ('dejittered_pooled_surrogate', '33.1'), ('dejittered_per_vehicle_surrogate', '60.1')]:
+        item(G5, f'Table 5 cells in >= 2 modules: {k}', v, 100 * sh[k], 1, ' %')
+    for k, v in [('data', '855788'), ('pooled_surrogate', '852654'), ('per_vehicle_surrogate', '811428'), ('dejittered', '564007'),
+                 ('dejittered_pooled_surrogate', '562599'), ('dejittered_per_vehicle_surrogate', '513937')]:
+        item(G5, f'Table 5 steps: {k}', v, st[k], 0)
+    item(G5, 'per-vehicle surrogate saving / data saving', '88', 100 * sav['per_vehicle_surrogate'] / sav['data'], 0, ' %')
+    item(G5, 'data minus per-vehicle surrogate', '0.14', sav['data'] - sav['per_vehicle_surrogate'], 2, ' bits')
+    item(G5, 'steps deleted by de-jittering', '34', 100 * (1 - st['dejittered'] / st['data']), 0, ' %')
+
+hp, hr = rd('hurst_power_summary.csv'), rd('hurst_power_real.csv')             # P1-3
+if hp is not None:
+    f7 = hp[(hp.family == 'fGn') & np.isclose(hp.H_true, 0.7)]
+    item(G5, 'fGn H=0.7 detected by R/S: min over modes', '44', 100 * f7.det_rs.min(), 0, ' %')
+    item(G5, 'fGn H=0.7 detected by R/S: max', '62', 100 * f7.det_rs.max(), 0, ' %')
+    item(G5, 'fGn H=0.7 detected by DFA (all three modes)', '57', 100 * f7.det_dfa.mean(), 0, ' %')
+    ROWS.append(dict(group=G5, item='fGn H=0.7 DFA identical in the three modes', paper='57 / 57 / 57', recomputed=' / '.join(f'{100 * x:.0f}' for x in f7.det_dfa),
+                     status='match' if np.allclose(f7.det_dfa, 0.57) else 'MISMATCH'))
+    af = hp[hp.family == 'ARFIMA']
+    item(G5, 'ARFIMA H=0.7 detected (R/S or DFA): max', '13', 100 * af[np.isclose(af.H_true, 0.7)][['det_rs', 'det_dfa']].max().max(), 0, ' %')
+    a1_ = hp[hp.family == 'AR1']
+    item(G5, 'AR(1) false positives: min', '2', 100 * a1_[['det_rs', 'det_dfa']].min().min(), 0, ' %')
+    item(G5, 'AR(1) false positives: max', '8', 100 * a1_[['det_rs', 'det_dfa']].max().max(), 0, ' %')
+    lo_, hi_ = hp.n_median.min(), hp.n_median.max()
+    ROWS.append(dict(group=G5, item='median segment length per mode within 450-550', paper='450--550', recomputed=f'{lo_:g}--{hi_:g}',
+                     status='match' if 450 <= lo_ and hi_ <= 550 else 'MISMATCH'))
+if hr is not None:
+    d = hr.groupby('mode')[['det_rs', 'det_dfa']].mean()
+    for m, c, v in [('walk', 'det_rs', '45'), ('walk', 'det_dfa', '41'), ('bus', 'det_rs', '10'), ('bus', 'det_dfa', '4'), ('car', 'det_rs', '15'), ('car', 'det_dfa', '3')]:
+        item(G5, f'real segments detected, {m} {c[4:]}', v, 100 * d.loc[m, c], 0, ' %')
+
+pc = paths.PRED_NGRAM / 'positive_control_summary.csv'                            # P0-5 (added 2026-10-22)
+if pc.exists():
+    pc = pd.read_csv(pc); lw, tr = pc[pc.model == 'lstm'], pc[pc.model == 'transformer']
+    item(G5, 'positive control: planted bits/step, min', '0.10', pc.planted_bits.min(), 2, ' bits')
+    item(G5, 'positive control: planted bits/step, max', '0.30', pc.planted_bits.max(), 2, ' bits')
+    item(G5, 'positive control: available gain, min', '0.10', pc.expected_gap.min(), 2, ' bits')
+    item(G5, 'positive control: available gain, max', '0.30', pc.expected_gap.max(), 2, ' bits')
+    item(G5, 'LSTM: 128 steps worse than 4 steps, min', '0.003', -lw.gap_mean.max(), 3, ' bits')
+    item(G5, 'LSTM: 128 steps worse than 4 steps, max', '0.011', -lw.gap_mean.min(), 3, ' bits')
+    item(G5, 'Transformer: 128 steps worse than 4 steps, min', '0.21', -tr.gap_mean.max(), 2, ' bits')
+    item(G5, 'Transformer: 128 steps worse than 4 steps, max', '0.23', -tr.gap_mean.min(), 2, ' bits')
+    above = pc.k4_bits - pc.H_ctx4
+    item(G5, '4-step models above the generator with 4 steps, min', '0.30', above.min(), 2, ' bits')
+    item(G5, '4-step models above the generator with 4 steps, max', '0.32', above.max(), 2, ' bits')
+    item(G5, 'positive control: seeds per model and set (all)', '3', pc.seeds.min(), 0)
+
+ta = paths.PRED_NGRAM / 'ch5_hist_ablation_transformer.csv'                       # Transformer history ablation (2026-10-22)
+if ta.exists():
+    ta = pd.read_csv(ta); ta = ta[ta.dataset == 'taxi_traj20']; tb = ta.groupby('hist').test_bits.mean()
+    for k, v in [(1, '4.44'), (2, '3.05'), (3, '2.83'), (4, '2.80'), (8, '2.77'), (16, '2.79'), (32, '2.82')]:
+        item(G5, f'taxi Transformer restricted to k={k} (k=4: mean of 3 seeds)', v, tb[k], 2, ' bits')
+    s4 = ta[ta['hist'] == 4].test_bits
+    item(G5, 'taxi Transformer k=4, lowest seed', '2.78', s4.min(), 2, ' bits'); item(G5, 'taxi Transformer k=4, highest seed', '2.84', s4.max(), 2, ' bits')
+    item(G5, 'taxi Transformer k=4, seeds', '3', len(s4), 0)
+tr = [js(f) for f in ('neural_taxi_traj20_transformer.json', 'neural_taxi_traj20_transformer_s1.json', 'neural_taxi_traj20_transformer_s2.json')]
+if all(tr):
+    item(G5, 'taxi Transformer, 128 steps, mean of 3 seeds', '3.22', np.mean([t['test']['bits'] for t in tr]), 2, ' bits')
 
 Q = pd.DataFrame(ROWS)
 if a.csv:

@@ -60,9 +60,14 @@ scripts\run_infomap.bat                           # pip install infomap, then ru
 python prediction/taxi_network_controls.py        # needs INFOMAP_BIN (Infomap 2.8.0 binary) or pip install infomap==2.8.0
 python prediction/positive_control.py make        # data/pc_L<L>_I<10 x bits>.npz (+ .json with md5 and generator entropies)
 python prediction/positive_control.py ngram       # CPU check → results/ngram/positive_control_ngram.csv
-scripts\run_positive_control.bat                  # GPU: positive control + Transformer history ablation (two lanes)
+scripts\run_positive_control.bat                  # GPU, one job at a time: positive control, then Transformer history ablation,
+                                                  # then the two summaries below (about 12-18 h on a GeForce MX250)
 python prediction/positive_control.py summary     # → results/ngram/positive_control_summary.csv, figures/output/fig_positive_control.*
 python prediction/summarise_neural.py             # also writes results/ngram/ch5_hist_ablation_transformer.csv
+# neural_hist.py and neural_ch5.py call keep_awake.py: on Windows the computer does not go to idle sleep while they
+# train (closing the lid still follows the power plan). They also write <tag>.resume.pt after every epoch (resume.py):
+# a run that is interrupted continues after its last finished epoch with the same random numbers when started again.
+scripts\test_resume.bat                           # checks this on the GPU: short run straight through vs stopped + resumed
 
 # 5. figures
 python prediction/figures/fig_ch5.py              # fig_ch5_ngram  (paper: prediction figure)

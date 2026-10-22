@@ -1,0 +1,31 @@
+lstm
+       dataset  hist  seed  test_bits
+geolife_bj500m     1     0      3.035
+geolife_bj500m     2     0      2.365
+geolife_bj500m     4     0      2.264
+geolife_bj500m     8     0      2.289
+    highd_v100     1     0      1.638
+    highd_v100     2     0      1.445
+    highd_v100    32     0      1.341
+     highd_v20     1     0      0.556
+     highd_v20     2     0      0.439
+     highd_v20     4     0      0.391
+     highd_v20     8     0      0.383
+     highd_v20    32     0      0.379
+   taxi_traj20     1     0      4.455
+   taxi_traj20     2     0      2.973
+   taxi_traj20     2     1      2.972
+   taxi_traj20     3     0      2.866
+   taxi_traj20     4     0      2.839
+   taxi_traj20     8     0      2.849
+transformer
+    dataset  hist  seed  test_bits
+taxi_traj20     1     0      4.442
+taxi_traj20     2     0      3.047
+taxi_traj20     3     0      2.830
+taxi_traj20     4     0      2.779
+taxi_traj20     4     1      2.844
+taxi_traj20     4     2      2.781
+taxi_traj20     8     0      2.769
+taxi_traj20    16     0      2.790
+taxi_traj20    32     0      2.820

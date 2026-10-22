@@ -43,3 +43,5 @@ prediction/infomap_input/
 RUNNING.txt
 DONE.txt
 prediction/results/work_taxi_network_controls/
+*.pt.tmp
+prediction/results/neural/resume_test/

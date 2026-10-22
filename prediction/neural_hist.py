@@ -15,6 +15,8 @@ and a log line per epoch.
 import argparse, json, math, os, time
 import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
+from keep_awake import keep_awake; keep_awake()  # Windows: no idle sleep while training (see keep_awake.py)
+import resume                                     # epoch-level checkpoints: an interrupted run continues (resume.py)
 
 p = argparse.ArgumentParser()
 p.add_argument('--data', required=True); p.add_argument('--hist', type=int, required=True)
@@ -26,6 +28,7 @@ p.add_argument('--epochs', type=int, default=25); p.add_argument('--patience', t
 p.add_argument('--per_epoch', type=int, default=300000, help='training targets drawn per epoch')
 p.add_argument('--max_val', type=int, default=150000, help='validation targets (fixed random subset)')
 p.add_argument('--seed', type=int, default=0); p.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results', 'neural', 'hist'))
+p.add_argument('--stop_after', type=int, default=0, help='testing: exit after this many epochs, as if interrupted')
 a = p.parse_args()
 torch.manual_seed(a.seed); rng = np.random.default_rng(a.seed)
 dev = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -88,7 +91,11 @@ if len(pva) > a.max_val:
 print(f'{tag}: V={V} targets train/val/test = {len(ptr)}/{len(pva)}/{len(pte)} device={dev}', flush=True)
 model = (LSTMLM() if a.model == 'lstm' else TransHist()).to(dev); opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=0.01)
 best, bad, hist, t0 = float('inf'), 0, [], time.time(); ckpt = os.path.join(a.out, tag + '.pt')
-for ep in range(a.epochs):
+rfile = os.path.join(a.out, tag + '.resume.pt'); start, stop = 0, False
+c = resume.load(rfile, model, opt, vars(a), rng)
+if c is not None: start, best, bad, stop, hist, t0 = c['epoch'] + 1, c['best'], c['bad'], c['stop'], c['hist'], time.time() - c['elapsed']
+for ep in range(start, a.epochs):
+    if stop: break
     model.train(); j = rng.choice(len(ptr), min(a.per_epoch, len(ptr)), replace=False); tot, nb = 0.0, 0
     for i in range(0, len(j), a.batch):
         x, y = batch_xy(ptr[j[i:i + a.batch]], str_[j[i:i + a.batch]]); x, y = x.to(dev), y.to(dev)
@@ -97,10 +104,12 @@ for ep in range(a.epochs):
     v = run_eval(model, pva, sva, topk=False)['bits']
     hist.append(dict(epoch=ep, train_loss=tot / nb, val_bits=v, sec=time.time() - t0)); print(hist[-1], flush=True)
     if v < best - 1e-4: best, bad = v, 0; torch.save(model.state_dict(), ckpt)
-    else:
-        bad += 1
-        if bad >= a.patience: break
+    else: bad += 1
+    stop = bad >= a.patience
+    resume.save(rfile, model, opt, dict(args=vars(a), epoch=ep, best=best, bad=bad, stop=stop, hist=hist, elapsed=time.time() - t0), rng)
+    if a.stop_after and ep + 1 - start >= a.stop_after: print(f'stopped after epoch {ep} (--stop_after)', flush=True); raise SystemExit(3)
 model.load_state_dict(torch.load(ckpt, map_location=dev))
-res = dict(dataset=name, model=a.model, hist=K, seed=a.seed, val_bits=best, test=run_eval(model, pte, ste), args=vars(a), history=hist)
-json.dump(res, open(os.path.join(a.out, tag + '.json'), 'w'), indent=1)
+res = dict(dataset=name, model=a.model, hist=K, seed=a.seed, val_bits=best, test=run_eval(model, pte, ste), args=vars(a), history=hist,
+           env=resume.environment())
+json.dump(res, open(os.path.join(a.out, tag + '.json'), 'w'), indent=1); resume.remove(rfile)
 print('TEST', res['test'], flush=True)
