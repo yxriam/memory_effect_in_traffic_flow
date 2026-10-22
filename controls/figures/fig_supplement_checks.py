@@ -5,6 +5,7 @@ One PDF/PNG per check; a figure whose input table is missing is skipped. All pan
   fig_s_null_calibration   P0-1  negative-control p-values; positive-control recovery and detection vs amount of data
   fig_s_reaction_delay     P0-2  gain of the leader's lagged dv / gap above the permutation null, per horizon
   fig_s_accel_noise        P0-3  acceleration autocorrelation and augmentation gains for five derivative definitions
+  (both from the tables of all 60 highD recordings, '_60rec', when they exist; since 2026-10-22, P3-4)
   fig_s_stops              P0-4  tau_c on whole vs stop-free windows; mixed-model coefficients
   fig_s_hurst_power        P1-3  detection rate of R/S and DFA for fGn / ARFIMA / AR(1) at the real segment lengths
   fig_s_positive_control   P0-5  gain of 128-step over 4-step networks on sequences with a planted long-range dependence
@@ -25,6 +26,7 @@ R = _P.CONTROLS_RESULTS
 W = 6.3                                                        # inches = 16 cm, the text width of the paper
 MODES = ['walk', 'bike', 'bus', 'subway', 'car', 'taxi', 'train']
 RED, BLUE, TEAL, CYAN, SALMON, LAV = NPG[0], NPG[3], NPG[2], NPG[1], NPG[4], NPG[5]
+HD = '_60rec' if (R / 'highd_accel_noise_60rec_gains.csv').exists() else ''   # highD checks: all 60 recordings
 
 
 def label(ax, s):
@@ -64,11 +66,11 @@ def null_calibration():
 
 def reaction_delay():
     """Gain of each lagged leader variable minus the mean of its permutation null (same betas); band = null 2.5-97.5 %."""
-    if not (R / 'highd_reaction_delay.csv').exists(): return
+    if not (R / f'highd_reaction_delay{HD}.csv').exists(): return
     fig, ax = plt.subplots(1, 3, figsize=(W, 2.9), gridspec_kw=dict(wspace=0.4))
     for suf, ls, alpha in (('', '-', 0.18), ('_leadacc', '--', 0.0)):
-        if not (R / f'highd_reaction_delay{suf}.csv').exists(): continue
-        G = pd.read_csv(R / f'highd_reaction_delay{suf}.csv'); Nl = pd.read_csv(R / f'highd_reaction_delay{suf}_null.csv')
+        if not (R / f'highd_reaction_delay{suf}{HD}.csv').exists(): continue
+        G = pd.read_csv(R / f'highd_reaction_delay{suf}{HD}.csv'); Nl = pd.read_csv(R / f'highd_reaction_delay{suf}{HD}_null.csv')
         for i, hz in enumerate(sorted(G.horizon_s.unique())):
             for var, c in (('dv', RED), ('gap', BLUE)):
                 g = G[(G.horizon_s == hz) & (G.added == var)].groupby('lag_s').gain_nats.agg(['mean', 'std'])
@@ -87,8 +89,8 @@ def reaction_delay():
 
 
 def accel_noise():
-    if not (R / 'highd_accel_noise_gains.csv').exists(): return
-    A = pd.read_csv(R / 'highd_accel_noise_acf.csv'); G = pd.read_csv(R / 'highd_accel_noise_gains.csv')
+    if not (R / f'highd_accel_noise{HD}_gains.csv').exists(): return
+    A = pd.read_csv(R / f'highd_accel_noise{HD}_acf.csv'); G = pd.read_csv(R / f'highd_accel_noise{HD}_gains.csv')
     defs = {'bd': ('backward diff.', RED), 'ds': ('dataset', BLUE), 'sg15': ('S–G 0.6 s', SALMON), 'sg21': ('S–G 0.84 s', TEAL), 'sg25': ('S–G 1.0 s', LAV)}
     fig, ax = plt.subplots(1, 2, figsize=(W, 2.6), gridspec_kw=dict(wspace=0.35, width_ratios=[1, 1.25]))
     for d, (lab, c) in defs.items():

@@ -10,6 +10,9 @@ line into the experiment log (EXPERIMENT_LOG.md). The expected values already in
 Group '5 checks' covers the supplementary checks added to the paper on 2026-10-20 (v3); its expected values include
 the four rounding fixes of that day (bike 20 %, Table 5 savings 1.109 and 0.363, bus DFA 4 %), and since 2026-10-22
 the positive control of the history ablation (P0-5).
+Group '6 P3' covers the second round of checks (2026-10-22): heading state, remote cells, multiple testing,
+trip-type mixtures and the held-out comparison with the back-off strength tuned per order; the highD checks of group 5
+use all 60 recordings since the same day.
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths
@@ -249,39 +252,45 @@ if s is not None:
         item(G5, 'GeoLife excess / 0.7 (genuine memory at recovery 0.7)', '0.017', e10.cmi2_excess.median() / 0.7, 3, ' bits')
         item(G5, 'same as share of the median plug-in CMI', '5', 100 * e10.cmi2_excess.median() / 0.7 / e10.cmi2_plugin.median(), 0, ' %')
 
-gn = rd('highd_accel_noise_gains.csv'); ac = rd('highd_accel_noise_acf.csv')   # P0-3
+gn = rd('highd_accel_noise_60rec_gains.csv'); ac = rd('highd_accel_noise_60rec_acf.csv')   # P0-3, all 60 recordings since 2026-10-22 (P3-4)
 if gn is not None:
     gn = gn[gn.state == 'signed_v'].set_index(gn.columns[0])
     co, re = gn.loc['coarse: V2(20,20) - V1(20)'], gn.loc['residual after a: VA2 - VA']
-    item(G5, 'highD 23 rec.: coarse gain, backward differences', '0.078', co.bd, 3, ' nats')
-    item(G5, 'highD 23 rec.: residual after a_t, backward differences', '0.0062', re.bd, 4, ' nats')
-    for col, v in [('ds', '-0.0027'), ('sg15', '0.0013'), ('sg21', '-0.0015'), ('sg25', '-0.0025')]:
+    item(G5, 'highD 60 rec.: coarse gain, backward differences', '0.073', co.bd, 3, ' nats')
+    item(G5, 'highD 60 rec.: residual after a_t, backward differences', '0.0070', re.bd, 4, ' nats')
+    for col, v in [('ds', '-0.0006'), ('sg15', '0.0050'), ('sg21', '0.0015'), ('sg25', '0.0004')]:
         item(G5, f'highD residual after a_t, {col}', v, re[col], 4, ' nats')
-    item(G5, 'coarse gain with smoothed speeds: min (dataset v)', '0.0002', co[['ds', 'sg15', 'sg21', 'sg25']].min(), 4, ' nats')
-    item(G5, 'coarse gain with smoothed speeds: max (S-G 0.6 s)', '0.0083', co[['ds', 'sg15', 'sg21', 'sg25']].max(), 4, ' nats')
+    item(G5, 'residual after a_t with dataset / smoothed v, a: max ("at most 0.005")', '0.005', re[['ds', 'sg15', 'sg21', 'sg25']].max(), 3, ' nats')
+    item(G5, 'same in bits ("0.007 bits")', '0.007', re[['ds', 'sg15', 'sg21', 'sg25']].max() / LN2, 3, ' bits')
+    item(G5, 'coarse gain with smoothed speeds: min (dataset v)', '0.0004', co[['ds', 'sg15', 'sg21', 'sg25']].min(), 4, ' nats')
+    item(G5, 'coarse gain with smoothed speeds: max (S-G 0.6 s; abstract "at most 0.008")', '0.0076', co[['ds', 'sg15', 'sg21', 'sg25']].max(), 4, ' nats')
 if ac is not None:
     a1 = ac[ac.lag == 1].set_index('definition').acf
-    for col, v in [('bd', '-0.32'), ('sg15', '0.14'), ('sg21', '0.58'), ('sg25', '0.75')]:
+    for col, v in [('bd', '-0.32'), ('sg15', '0.16'), ('sg21', '0.60'), ('sg25', '0.77')]:
         item(G5, f'highD lag-1 autocorrelation of a, {col}', v, a1[col], 2)
-# (the 1.45 million steps and 24,804 vehicles are printed by highd_accel_noise.py, not stored in a result file)
+# (the 7.1 million steps and 110,346 vehicles are printed by highd_accel_noise.py / highd_full.py, not stored in a result file)
 
 def delay_excess(suf, hz, var='dv', lag=2.0):                                  # P0-2: mean gain over splits minus null mean, bits
-    G = rd(f'highd_reaction_delay{suf}.csv'); N = rd(f'highd_reaction_delay{suf}_null.csv')
+    G = rd(f'highd_reaction_delay{suf}_60rec.csv'); N = rd(f'highd_reaction_delay{suf}_60rec_null.csv')
     if G is None or N is None: return None
     gg = G[(G.horizon_s == hz) & (G.added == var) & np.isclose(G.lag_s, lag)].gain_nats.mean()
     return (gg - N[(N.horizon_s == hz) & (N.added == var) & np.isclose(N.lag_s, lag)].gain_nats.mean()) / LN2
-for hz, v in [(0.2, '0.003'), (1.0, '0.019'), (2.0, '0.018')]:
-    item(G5, f'leader dv 2 s back above null, horizon {hz:g} s', v, delay_excess('', hz), 3, ' bits')
-for hz, v in [(1.0, '0.005'), (2.0, '0.003')]:
+for hz, v in [(0.2, '0.006'), (1.0, '0.039'), (2.0, '0.045')]:
+    item(G5, f'leader dv 2 s back above null, horizon {hz:g} s (60 rec.)', v, delay_excess('', hz), 3, ' bits')
+for hz, v in [(1.0, '0.017'), (2.0, '0.011')]:
     item(G5, f'same with leader acceleration in the state, horizon {hz:g} s', v, delay_excess('_leadacc', hz), 3, ' bits')
-la = rd('highd_reaction_delay_leadacc.csv')
+for hz, v in [(1.0, '56'), (2.0, '76')]:
+    e0, e1 = delay_excess('', hz), delay_excess('_leadacc', hz)
+    item(G5, f'reduction by the leader acceleration, horizon {hz:g} s', v, None if e0 is None or e1 is None else 100 * (1 - e1 / e0), 0, ' %')
+la = rd('highd_reaction_delay_leadacc_60rec.csv')
 if la is not None:
-    for hz, v in [(1.0, '0.006'), (2.0, '0.018')]:
+    for hz, v in [(1.0, '0.017'), (2.0, '0.046')]:
         item(G5, f'gain of the leader acceleration itself, horizon {hz:g} s', v, la[(la.horizon_s == hz) & (la.added == 'a_lead')].gain_bits.mean(), 3, ' bits')
-kn = rd('highd_reaction_delay_leadacc_knn.csv')
+kn = rd('highd_reaction_delay_leadacc_60rec_knn.csv')
 if kn is not None:
     ROWS.append(dict(group=G5, item='kNN CMI with leader acceleration: significant cells', paper='none', recomputed=f'{(kn.p < .05).sum()} of {len(kn)}',
                      status='match' if (kn.p < .05).sum() == 0 else 'MISMATCH'))
+# (the 3.8-4.9 million delay samples are printed by highd_reaction_delay.py: 3,838,026 / 4,404,685 / 4,882,029 for 2 / 1 / 0.2 s)
 
 s = rj('stops_tautology_summary.json')                                          # P0-4
 if s is not None:
@@ -427,6 +436,91 @@ if ta.exists():
 tr = [js(f) for f in ('neural_taxi_traj20_transformer.json', 'neural_taxi_traj20_transformer_s1.json', 'neural_taxi_traj20_transformer_s2.json')]
 if all(tr):
     item(G5, 'taxi Transformer, 128 steps, mean of 3 seeds', '3.22', np.mean([t['test']['bits'] for t in tr]), 2, ' bits')
+
+# ---- 6: second round of checks (to-do list P3, 2026-10-22): heading state, remote cells, multiple testing,
+#         trip-type mixtures, held-out with the back-off strength tuned per order (Sections 2.2-2.3, 4.1-4.3, 7.4-7.5,
+#         9, Table 6, Appendix B, abstract)
+G6 = '6 P3'
+mt = rd('multiple_testing.csv')                                                   # P3-3
+if mt is not None:
+    m = mt.set_index('unit_set')
+    g10, g100 = m.loc['GeoLife users, 10 m, second order (bits)'], m.loc['GeoLife users, 100 m, second order (bits)']
+    t2, t3 = m.loc['taxi trajectories, 20x20 compressed, second order (nats)'], m.loc['taxi trajectories, 20x20 compressed, third order (nats)']
+    item(G6, 'GeoLife 10 m: share p<0.05', '66.3', 100 * g10.share_p05, 1, ' %')
+    item(G6, 'its bootstrap 95% interval, low', '59', 100 * g10.share_p05_lo, 0, ' %'); item(G6, 'its bootstrap 95% interval, high', '73', 100 * g10.share_p05_hi, 0, ' %')
+    item(G6, 'GeoLife 10 m: share after Benjamini-Hochberg', '65.2', 100 * g10.bh_share, 1, ' %')
+    item(G6, 'GeoLife 10 m: Storey pi1', '0.51', g10.pi1, 2); item(G6, 'its interval, low', '0.39', g10.pi1_lo, 2); item(G6, 'its interval, high', '0.64', g10.pi1_hi, 2)
+    item(G6, 'GeoLife 100 m: share p<0.05', '82.1', 100 * g100.share_p05, 1, ' %'); item(G6, 'GeoLife 100 m: share after BH', '82.1', 100 * g100.bh_share, 1, ' %')
+    item(G6, 'GeoLife 100 m: pi1', '0.80', g100.pi1, 2)
+    item(G6, 'taxi 2nd order: share p<0.05', '55.2', 100 * t2.share_p05, 1, ' %'); item(G6, 'taxi 2nd order: BH', '45.7', 100 * t2.bh_share, 1, ' %'); item(G6, 'taxi 2nd order: pi1', '0.74', t2.pi1, 2)
+    item(G6, 'taxi 3rd order: share p<0.05', '7.7', 100 * t3.share_p05, 1, ' %'); item(G6, 'taxi 3rd order: BH', '0', 100 * t3.bh_share, 0, ' %'); item(G6, 'taxi 3rd order: pi1', '0', t3.pi1, 0)
+ht = rd('geolife_heldout_tuned.csv')                                              # P3-9
+if ht is not None:
+    q = ht.groupby('grid')
+    for grid, v in [('10m', '0.005'), ('50m', '0.044'), ('100m', '0.087'), ('200m', '0.101')]:
+        item(G6, f'GeoLife held-out, tuned back-off: median 2nd-order gain, {grid}', v, q.G2_tuned.median()[grid], 3, ' bits')
+    item(G6, 'share of users with a positive tuned gain, 10 m', '66', 100 * (ht[ht.grid == '10m'].G2_tuned.dropna() > 0).mean(), 0, ' %')
+    pos = [(ht[ht.grid == g_].G2_tuned.dropna() > 0).mean() for g_ in ('50m', '100m', '200m')]
+    item(G6, 'same, 50-200 m: min', '77', 100 * min(pos), 0, ' %'); item(G6, 'same, 50-200 m: max', '79', 100 * max(pos), 0, ' %')
+    for grid, b, v in [('10m', 3, '0.000'), ('100m', 3, '0.065'), ('10m', 10, '0.017'), ('100m', 10, '0.118')]:
+        item(G6, f'one beta for all levels: 2nd-order gain, {grid}, beta={b}', v, q[f'G2_b{b}'].median()[grid], 3, ' bits')
+    item(G6, 'tuned 3rd-order gain: largest median over grids', '0.000', q.G3_tuned.median().max(), 3, ' bits')
+    item(G6, 'beta=10 for all levels: largest median 3rd-order gain ("up to 0.04")', '0.04', q.G3_b10.median().max(), 2, ' bits')
+h100, h10, htx = rd('heading_state_geolife_100m.csv'), rd('heading_state_geolife_10m.csv'), rd('heading_state_taxi_200m.csv')   # P3-1
+def wavg(d, c):
+    k = d.G2_tuned.notna(); return np.average(d[c][k], weights=d.n_test[k])
+if h100 is not None and h10 is not None:
+    k100, k10 = h100[h100.G2_tuned.notna()], h10[h10.G2_tuned.notna()]
+    item(G6, 'heading test, GeoLife 100 m: users', '160', len(k100), 0); item(G6, 'heading test, GeoLife 10 m: users', '174', len(k10), 0)
+    item(G6, '100 m: median tuned G2 (trigram test steps)', '0.088', k100.G2_tuned.median(), 3, ' bits'); item(G6, '100 m: median gain of the heading alone', '0.108', k100.GA_heading_tuned.median(), 3, ' bits')
+    item(G6, '100 m: median R (previous cell, heading known)', '0.000', k100.R_heading_tuned.median(), 3, ' bits')
+    item(G6, '100 m: R / G2, test-step weighted (abstract, Fig. 9a)', '0.7', 100 * wavg(h100, 'R_heading_tuned') / wavg(h100, 'G2_tuned'), 1, ' %')
+    item(G6, '100 m: share of users with R < G2/2', '81', 100 * (k100.R_heading_tuned < k100.G2_tuned / 2).mean(), 0, ' %')
+    item(G6, '10 m: median tuned G2', '0.004', k10.G2_tuned.median(), 3, ' bits'); item(G6, '10 m: median gain of the heading alone', '0.006', k10.GA_heading_tuned.median(), 3, ' bits')
+    r10 = [wavg(h10, f'R_{l}_tuned') / wavg(h10, 'G2_tuned') for l in ('heading', 'heading+side', 'heading+side+speed')]
+    item(G6, '10 m: R / G2 weighted, smallest label', '1', 100 * min(r10), 0, ' %'); item(G6, '10 m: R / G2 weighted, heading alone', '13', 100 * max(r10), 0, ' %')
+    item(G6, 'weighted G2, 10 m (Fig. 9 caption)', '0.065', wavg(h10, 'G2_tuned'), 3, ' bits'); item(G6, 'weighted G2, 100 m', '0.378', wavg(h100, 'G2_tuned'), 3, ' bits')
+    for d, lab, e0, eh, sh, rl, n in [(h100, '100 m', '0.115', '0.008', '65', '8', '172'), (h10, '10 m', '0.013', '0.002', '51', '24', '176')]:
+        e = d[['E0', 'Eh', 'Eh_shuffled']].dropna(); S_ = e.sum()
+        item(G6, f'{lab}: CMI users', n, len(e), 0)
+        item(G6, f'{lab}: median excess CMI given the cell', e0, e.E0.median(), 3, ' bits'); item(G6, f'{lab}: median excess given cell and heading', eh, e.Eh.median(), 3, ' bits')
+        item(G6, f'{lab}: summed excess left with shuffled heading', sh, 100 * S_.Eh_shuffled / S_.E0, 0, ' %'); item(G6, f'{lab}: summed excess left with real heading', rl, 100 * S_.Eh / S_.E0, 0, ' %')
+    item(G6, '100 m: share significant given the heading', '58', 100 * (h100.p_h.dropna() < .05).mean(), 0, ' %')
+    item(G6, '10 m: share significant given the heading', '51', 100 * (h10.p_h.dropna() < .05).mean(), 0, ' %')
+if htx is not None:
+    t = htx.iloc[0]
+    item(G6, 'taxi heading test: vehicle files', '4316', t.vehicles, 0)
+    item(G6, 'taxi: training steps (1.6 million)', '1.6', t.n_train / 1e6, 1, ' M'); item(G6, 'taxi: test steps (0.4 million)', '0.4', t.n_test / 1e6, 1, ' M')
+    item(G6, 'taxi: tuned G2', '0.40', t.G2_tuned, 2, ' bits'); item(G6, 'taxi: gain of heading + entry side', '0.33', t['GA_heading+side_tuned'], 2, ' bits')
+    item(G6, 'taxi: R with heading + entry side', '0.04', t['R_heading+side_tuned'], 2, ' bits')
+    item(G6, 'taxi: R / G2, heading + side (abstract "10 %")', '10', 100 * t['R_heading+side_tuned'] / t.G2_tuned, 0, ' %')
+    item(G6, 'taxi: R / G2, heading alone', '20', 100 * t.R_heading_tuned / t.G2_tuned, 0, ' %')
+rm = rd('remote_destination_geolife.csv')                                          # P3-2
+if rm is not None:
+    L_ = rm[rm['long:I_D'].notna()]
+    item(G6, 'remote cells: users with steps >= 101 into a trip', '135', len(L_), 0)
+    m20 = [L_[f'long:I_{m}'].median() for m in (5, 10, 20)]
+    ROWS.append(dict(group=G6, item='remote cells m = 5, 10, 20: medians ("about 0.002")', paper='0.002 bits', recomputed=' / '.join(f'{x:.4f}' for x in m20),
+                     status='match' if all(abs(x - 0.002) < 0.0005 for x in m20) else 'MISMATCH'))
+    item(G6, 'remote cells m = 50: median', '0.0009', L_['long:I_50'].median(), 4, ' bits'); item(G6, 'remote cells m = 100: median', '0.0003', L_['long:I_100'].median(), 4, ' bits')
+    sh = [100 * (L_[f'long:p_I_{m}'] < .05).mean() for m in (5, 10, 20)]
+    item(G6, 'remote cells m = 5-20: share p<0.05, min', '42', min(sh), 0, ' %'); item(G6, 'remote cells m = 5-20: share p<0.05, max', '44', max(sh), 0, ' %')
+    for m, v in [(50, '34'), (100, '27')]:
+        item(G6, f'remote cells m = {m}: share p<0.05', v, 100 * (L_[f'long:p_I_{m}'] < .05).mean(), 0, ' %')
+    for m, vd, vs in [(5, '36', '28'), (10, '29', '26'), (20, '26', '26')]:          # same steps as Fig. 9c (>= 101 cells into a trip)
+        item(G6, f'destination lowers I_{m} (means, 135 users)', vd, 100 * (1 - L_[f'long:I_{m}|D'].mean() / L_[f'long:I_{m}'].mean()), 0, ' %')
+        item(G6, f'shuffled destination lowers I_{m}', vs, 100 * (1 - L_[f'long:I_{m}|Dsh'].mean() / L_[f'long:I_{m}'].mean()), 0, ' %')
+lm_ = rd('latent_mixture_geolife_100m.csv')                                        # P3-7
+if lm_ is not None:
+    gm = max(lm_[f'GM_K{K}_b3'].median() for K in (2, 4, 8))
+    item(G6, 'trip-type mixture: largest median gain over one chain (beta=3)', '0.013', gm, 3, ' bits')
+    ratios = []
+    for K in (2, 4, 8):
+        for b in ('_b3', '_b10'):
+            s_ = lm_[lm_[f'GM_K{K}{b}'].notna()]
+            ratios.append((s_[f'Rrand_K{K}{b}'] - s_[f'R_K{K}{b}']).median() / s_[f'G2own{b}'].median())
+    item(G6, 'classes absorb beyond random classes: min share of G2', '1', 100 * min(ratios), 0, ' %')
+    item(G6, 'classes absorb beyond random classes: max share of G2', '6', 100 * max(ratios), 0, ' %')
 
 Q = pd.DataFrame(ROWS)
 if a.csv:

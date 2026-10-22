@@ -15,7 +15,8 @@ Reported per user (bits per test step): LL1, LL2, LL3 and the gains G2 = LL2 - L
 strengths and, as a check against the paper, for beta = 3 and 10 at every level.
 Deterministic (no random numbers). Each user is written atomically to controls/work/heldout_tuned/<grid>/<user>.json.
 
-    python controls/geolife_heldout_tuned.py   -> results/geolife_heldout_tuned.csv (10 m and 100 m)
+    python controls/geolife_heldout_tuned.py   -> results/geolife_heldout_tuned.csv (10, 50, 100 and 200 m; 50 m and
+                                                  200 m added 10-22 for Fig. 3d)
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
@@ -90,7 +91,7 @@ def user(path, g):
 
 if __name__ == '__main__':
     files = sorted(glob.glob(os.path.join(str(P.GEOLIFE_CACHE), '*.npz'))); rows = []; t0 = time.time()
-    for g, lab in ((0.0001, '10m'), (0.001, '100m')):
+    for g, lab in ((0.0001, '10m'), (0.0005, '50m'), (0.001, '100m'), (0.002, '200m')):
         for i, f in enumerate(files):
             u = os.path.basename(f)[:3]; out = WORK / lab / f'{u}.json'
             if not out.exists():

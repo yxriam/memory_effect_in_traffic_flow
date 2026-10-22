@@ -105,14 +105,15 @@ by vehicle (seed 1). Fitted values are in `results/coarse_model_params.json`.
 
 | script | figure | inputs |
 |---|---|---|
-| `fig_geolife_bias.py` | `fig_geolife_bias.pdf` — plug-in vs null vs excess CMI, resolution, held-out gain | `geolife_robust_per_user.csv` |
+| `fig_geolife_bias.py` | `fig_geolife_bias.pdf` (Fig. 1) — plug-in vs null vs excess CMI, resolution, held-out gain with tuned back-off (redrawn 2026-10-22) | `geolife_robust_per_user.csv`, `geolife_heldout_tuned.csv` |
+| `fig_path_heading.py` | `fig_path_heading.pdf` (Fig. 9) — path memory and the heading; remote cells with and without the destination | `heading_state_*.csv`, `remote_destination_geolife.csv` |
 | `fig_highd_aug.py` | `fig_highd_augment.pdf` — state augmentation, VACF, kernel | `augment_markov.csv`, `fine_resolution.csv`, `vacf_kernels.npz`, `vacf_summary.json` |
 | `fig_coarse_model.py` | `fig_coarse_model.pdf` — gain vs bins for data / AR(1) / AR(2), acceleration ACF | `coarse_model*.{csv,json}`, `highd_accel_acf.csv` |
 | `fig_hurst.py` | `fig_geolife_hurst_control.pdf` | `hurst_control.csv` |
 | `fig_three_layers.py` | `fig_three_layers.pdf` — speed memory, persistence vs stops, path memory, origin | `memory_by_mode_*.csv`, `row_persistence.csv`, `origin_memory_geolife.csv`, `taxi_origin_0.002.csv` |
 | `fig_taxi_gridmode.py` | `fig_taxi_gridmode.pdf` — per-trajectory vs global grid | `../taxi/memory_*.csv` |
 | `fig_geolife_kernel.py` | `geolife_kernel.png` — kernel decay by mode (supplement) | `../geolife/outputs_clean/04_mode_memory/`, `geolife_kernel_window_sensitivity.csv` |
-| `fig_supplement_checks.py` | `fig_s_null_calibration`, `fig_s_reaction_delay`, `fig_s_accel_noise`, `fig_s_stops`, `fig_s_hurst_power` (to-do checks) | the tables of the checks above |
+| `fig_supplement_checks.py` | `fig_s_null_calibration`, `fig_s_reaction_delay`, `fig_s_accel_noise`, `fig_s_stops`, `fig_s_hurst_power`, `fig_s_positive_control` (to-do checks; the highD ones from the `_60rec` tables) | the tables of the checks above |
 
 Every figure except `fig_highd_augment.pdf` regenerates pixel-identically from the committed tables.
 `vacf_kernels.npz` was not kept from the original run, so `fig_highd_aug.py` needs one run of
