@@ -29,6 +29,7 @@
 | 2026-10-20 | 把补充分析结果写进论文 v3；论文数字核对扩充 | 无新数据；用 10-19 – 10-20 的结果文件 | 重画补充图 5 张和图 8；`check_paper_numbers.py` 新增第 5 组（134 项）；独立核对 | 282 项全部一致；查出并改正论文草稿 4 处舍入（自行车 20%、表 5 的 1.109 和 0.363、公交 DFA 4%）和若干过强措辞（highD 无真实记忆、时段切换占 27–54%、零模型低估 20–30%） | P0-5 GPU；highD 60 段重跑；摘要压缩；其他图重画 | [`experiment_log/2026-10-20_paper_v3_integration.md`](experiment_log/2026-10-20_paper_v3_integration.md) |
 | 2026-10-20 – 10-22 | P0-5 阳性对照（本机 GPU）；神经网络训练改为可断点续跑 | 5 组合成序列（`taxi_traj20` 的片段与划分，植入 L = 8–32 步前的依赖 0.1–0.3 bits/步） | `run_positive_control.bat`：60 个模型（LSTM / Transformer × k = 4 / 128 步 × 3 种子），GeForce MX250，torch 1.10 | 两种网络都学不到植入的依赖：128 步 LSTM 比 4 步差 0.003–0.011 bits，Transformer 差 0.21–0.23 bits，可得增益 0.10–0.30 bits → 论文删去“可用记忆止于三四步”；`check_paper_numbers.py` 293 项一致 | 续跑 Transformer 消融剩下的 6 个；续跑测试 | [`experiment_log/2026-10-22_p05_positive_control.md`](experiment_log/2026-10-22_p05_positive_control.md) |
 | 2026-10-22 | 真实出租车数据上的 Transformer 历史长度消融（P0-5 第二项） | `taxi_traj20` | `lane_transformer_ablation.bat`：k = 1–32、k = 4 三个种子、128 步三个种子；GeForce MX250 | 4.44 / 3.05 / 2.83 / 2.80 / 2.77 / 2.79 / 2.82 bits（k = 1–32），128 步 3.22；k ≥ 4 的差别在种子波动内，与 LSTM 一致 | 论文写作；highD 60 段重跑 | 同上，第二部分 |
+| 2026-10-22 | 第二轮补充分析 P3（P3-1 – P3-4、P3-7 – P3-9，云端） | GeoLife 181 名用户；highD 全部 60 段（110,346 辆车）；出租车 4,316 个文件 | 新脚本 `heading_state.py`、`remote_destination.py`、`multiple_testing.py`、`latent_mixture.py`、`taxi_status_column.py`、`geolife_heldout_tuned.py`；highD 三个脚本改为按块续跑 | 二阶路径记忆主要是状态缺航向（GeoLife 100 m 加航向后剩 0.7%，出租车剩 10–20%）；远程格子 20 格内不衰减、之后衰减，目的地和行程类别都解释不了；显著比例经得起 BH；GeoLife 留出各阶调 β 后二阶 +0.087 bits、三阶 0；highD 60 段仍无延迟峰，但前车信息约翻倍、加前车加速度后剩 0.017 / 0.011 bits；第 7 列像载客标志；`check_paper_numbers.py` 304 项一致 | 按 P3 结果改论文（P3-10）；用户确认第 7 列 | [`experiment_log/2026-10-22_p05_positive_control.md`](experiment_log/2026-10-22_p05_positive_control.md) 第三部分 |
 
 ## 当前的下一步
 
@@ -36,11 +37,15 @@
 - [x] 按补充分析的判据改写论文（2026-10-20 完成论文 v3，P0-5 部分除外；待办清单 P2-1；2026-10-19 记录第二部分“对论文的影响”）：出租车记忆网络（§4.3）、停站（§7.2）、路线约束与“公交最强”（§7.3）、“purposive”（§7.4）、highD 的 0.076 nats 来源与 0.010 bits 表述、Hurst 改为弱表述；补充图用 `controls/figures/output/fig_s_*.pdf`。
 - [x] 本机 GPU：P0-5 阳性对照 60 个模型（2026-10-22 完成：检不出植入的长依赖，论文 §8.2 已按判据改写）。
 - [x] 本机 GPU：真实数据上的 Transformer 历史长度消融（2026-10-22 02:06 完成，结果与 LSTM 相同：信息集中在前 3–4 步；已补进论文表 4 和 §8.2；`check_paper_numbers.py` 304 项一致）。
-- [ ] 本机：`local_paths.json` 已加 `highd_full`；用 highD 全部 60 段重跑 `controls/highd_accel_noise.py`、`controls/highd_reaction_delay.py`（及 `--lead-accel`），确认 23 段上的结论不变；之后把论文 §5.4 和附录 B 的“23 段录像”换成全部数据。
-- [ ] 本机：P1-4 地图匹配（需要 OpenStreetMap 路网）。
+- [x] highD 全部 60 段重跑 `controls/highd_accel_noise.py`、`controls/highd_reaction_delay.py`（及 `--lead-accel`）（2026-10-22 在云端完成，见第三部分 P3-4：无延迟峰、(v, a) 一阶基本充分的结论不变，但 0.6 s 平滑窗口剩余 0.0044–0.0050 nats、加前车加速度后剩 0.017 / 0.011 bits，论文这几个数字和“23 段录像”要按 60 段改，归入 P3-10）。
+- [ ] 本机：P1-4 地图匹配（需要 OpenStreetMap 路网）。P3-1 表明二阶路径记忆基本由航向解释，必要性下降，改为可选。
 - [ ] 在本机跑一遍 controls 全流程，确认 Windows 下也逐位一致：`python tools/check_paper_numbers.py` 应全部为 match。
 - [ ] 在本机重跑 prediction：`ch6_networks.py taxi`（要读全部 4,316 个出租车文件）和 Infomap 2.8.0；神经网络在 GPU 上重跑，预期与已存结果相差约 0.01 bits。（2026-10-20：云端用 Infomap 2.8.0 命令行版重算出租车网络，码长与已提交结果相差 < 0.002 bits，见 `prediction/results/ngram/taxi_network_controls.csv` 的 data 行。）
 - [ ] 可选：多进程脚本的输出行序不固定（数值相同），改为 `imap` 或写出前排序，让 git diff 只显示真实变化。
 - [ ] 论文写作：摘要从约 540 词压缩到目标期刊的要求（Elsevier 常见 ≤ 250 词）；P2-2（讨论中的“慢变量记忆”）、P2-3（参考文献核对）、P2-4（后续工作）。
 - [ ] 正文其他图（图 1–7、9–11）按同样的版式规则从结果表重画（图中文字与正文同大、无重叠、长图例进图注、Nature 配色）。
+- [x] 待办清单 P3 中能在云端做的各项（2026-10-22 完成：P3-1 – P3-4、P3-7、P3-8 的描述性证据、新增的 P3-9；见 2026-10-22 记录第三部分）。
+- [ ] 用户确认：出租车记录第 7 列是否为载客标志（P3-8；数据显示取值 1 像载客行程）。若是，论文“没有载客标志”要改，出租车的起点、目的地检验改用真正的载客行程。
+- [ ] 按 P3 结果改论文（待办清单 P3-10，等用户同意后改英文、中文两版并扩充 `check_paper_numbers.py`）：第三层改写（二阶路径记忆主要是缺航向）；远程成分改为“约 20 格内不衰减、之后衰减，目的地解释不了”；显著比例加 BH 与自助区间；GeoLife 留出改报各阶调 β 后的 +0.087 / +0.005 bits，删去“三阶最多 0.04 bits”；highD 换成 60 段的数字。
+- [ ] P3-5 外部数据重复（NGSIM、Porto，需本机下载）；P3-6 改为“三个系统加入运动学变量前后的二阶增益”统一图（数据都已有，可在云端画）。
 - [x] 补充分析待办清单中能在云端做的实验（2026-10-20 完成：P0-1 – P0-4、P1-1 – P1-3、P1-5、P1-6；P0-5 完成数据与 CPU 部分）。

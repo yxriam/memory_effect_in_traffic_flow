@@ -64,7 +64,24 @@ Checks added for the to-do list of 2026-10-18 (record: `../experiment_log/2026-1
 The taxi memory-network part of P1-1 and P1-5 is `../prediction/taxi_network_controls.py`; P0-5 is
 `../prediction/positive_control.py`. Figures: `figures/fig_supplement_checks.py` → `figures/output/fig_s_*.pdf`.
 `highd_full` must point to the folder of the original release (`*_tracks.csv`, `*_tracksMeta.csv`), e.g.
-`D:/BaiduNetdiskDownload/highd-dataset-v1.0/data`; the checks used recordings 01–23 (see the experiment log).
+`D:/BaiduNetdiskDownload/highd-dataset-v1.0/data`. With only the 23 recordings of the first run there (01–11,
+15–24, 58, 59) the result files keep their names; with all 60 recordings they carry `_60rec` (`highd_accel_noise_60rec*.csv`,
+`highd_reaction_delay[_leadacc]_60rec*.csv`). Since 2026-10-22 the per-recording states are cached in
+`work/highd_full_states/` and the two checks cache every block, so an interrupted run continues where it stopped.
+
+Second round (to-do list P3, 2026-10-22; record: `../experiment_log/2026-10-22_p05_positive_control.md`, part 3):
+
+| script | to-do | reads | writes (`results/`) |
+|---|---|---|---|
+| `heading_state.py geolife 0.001` / `geolife 0.0001` / `taxi 0.002` | P3-1 | GeoLife cache, `taxi_raw` | `heading_state_geolife_100m.csv`, `_10m.csv`, `heading_state_taxi_200m.csv` — second-order gain with and without the entry heading / side / speed in the state (fixed and tuned back-off), CMI given the heading with a shuffled-heading control |
+| `remote_destination.py` | P3-2 | GeoLife cache | `remote_destination_geolife.csv` — I(S+; S(t−m) given the last 3 cells), m = 5–100, with the destination and a shuffled destination in the condition |
+| `multiple_testing.py` | P3-3 | `geolife_robust_per_user.csv`, `memory_by_mode_path.csv`, `../taxi/memory_full_per_file.csv` | `multiple_testing.csv` — Storey π₁, Benjamini–Hochberg share, bootstrap intervals |
+| `latent_mixture.py [grid]` | P3-7 | GeoLife cache | `latent_mixture_geolife_100m.csv` — mixture of K first-order chains (one class per trip) vs second order, random-class control |
+| `taxi_status_column.py` | P3-8 | `taxi_raw` | `taxi_status_column.csv` — runs of each value of the 7th column (duration, path, moving share) |
+| `geolife_heldout_tuned.py` | P3-9 | GeoLife cache | `geolife_heldout_tuned.csv` — held-out gains of orders 2 and 3 with the back-off strength tuned for each order |
+
+Each of these writes one file per unit (user, file, block) under `work/` with an atomic rename and skips finished
+units on a restart; seeds are fixed integers or `zlib.crc32` of a label.
 
 **Taxi origin memory.** The committed `taxi_origin_*.csv` came from the first 100 files of `taxi_pick.json`
 (Taxi_106 … Taxi_76698), all of which are usable. The script pools the first 100 usable files in list order and

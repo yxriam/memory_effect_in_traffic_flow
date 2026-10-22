@@ -9,7 +9,9 @@ For every vehicle the speed and acceleration along the driving direction are com
 plus the preceding-vehicle variables of the dataset: gap = dhw (m), dv = leader speed - own speed (m/s),
 leader id, lane id and the driving-direction sign dir (-1 towards -x; signed v = dir * v, as in highd_augment.py).
 Rows are kept every 5th frame (0.2 s). Vehicles with fewer than 50 frames are skipped.
-The table is cached in controls/work/highd_full_states.pkl.
+The table is cached per recording in controls/work/highd_full_states/<rec>.pkl (written atomically), so an interrupted
+build continues with the recordings still missing. TAG names the outputs of the scripts that use this table: '' for the
+23 recordings of the first run (01-11, 15-24, 58, 59), '_<n>rec' for any other set (e.g. '_60rec' for the full release).
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
@@ -21,7 +23,12 @@ from multiprocessing import Pool
 DT_RAW, DS = 0.04, 5
 DT = DT_RAW * DS
 SG = {'sg15': 15, 'sg21': 21, 'sg25': 25}
-CACHE = P.CONTROLS_WORK / 'highd_full_states.pkl'
+CACHE = P.CONTROLS_WORK / 'highd_full_states.pkl'          # single-file cache of the first (23-recording) run
+CACHE_DIR = P.CONTROLS_WORK / 'highd_full_states'          # per-recording cache
+FIRST_RUN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 58, 59]
+FILES = sorted(glob.glob(os.path.join(str(P.HIGHD_FULL), '*_tracks.csv')))
+RECS = [int(os.path.basename(f)[:2]) for f in FILES]
+TAG = '' if RECS == FIRST_RUN else f'_{len(RECS)}rec'
 COLS = ['frame', 'id', 'x', 'xVelocity', 'xAcceleration', 'dhw', 'precedingXVelocity', 'precedingId', 'laneId']
 
 
@@ -71,22 +78,34 @@ def add_dir(S):
     return S.merge(pd.concat(m), on='uid', how='left')
 
 
+def process_cached(path):
+    """process() with a per-recording cache (atomic write), so an interrupted build resumes."""
+    c = CACHE_DIR / (os.path.basename(path)[:2] + '.pkl')
+    if c.exists():
+        return pd.read_pickle(c)
+    t = process(path)
+    for col in t.columns:
+        if t[col].dtype == np.float64:
+            t[col] = t[col].astype(np.float32)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True); tmp = str(c) + '.tmp'
+    t.to_pickle(tmp); os.replace(tmp, c)
+    return t
+
+
 def load():
-    if CACHE.exists():
+    if TAG == '' and CACHE.exists():         # the first run's single-file cache (same rows as the per-recording cache)
         S = pd.read_pickle(CACHE)
         if 'dir' not in S:                       # caches written before the 'dir' column existed
             S = add_dir(S); S.to_pickle(CACHE)
         return S
-    files = sorted(glob.glob(os.path.join(str(P.HIGHD_FULL), '*_tracks.csv')))
     t0 = time.time()
     with Pool(2) as pool:
-        parts = pool.map(process, files)
+        parts = pool.map(process_cached, FILES)      # result order = FILES order, independent of completion order
     S = pd.concat(parts, ignore_index=True).sort_values(['uid', 'frame']).reset_index(drop=True)
     for c in S.columns:
         if S[c].dtype == np.float64:
             S[c] = S[c].astype(np.float32)
-    S.to_pickle(P.out(CACHE))
-    print(f'highD full: {len(files)} recordings, {S.uid.nunique()} vehicles, {len(S)} rows [{time.time() - t0:.0f}s]', flush=True)
+    print(f'highD full: {len(FILES)} recordings, {S.uid.nunique()} vehicles, {len(S)} rows [{time.time() - t0:.0f}s]', flush=True)
     return S
 
 

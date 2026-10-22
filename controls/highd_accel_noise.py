@@ -12,10 +12,13 @@ two states: signed velocity (as in the paper's augmentation table) and speed alo
 The original release covers 23 of the 60 recordings here (01-11, 15-24, 58, 59), so the 'bd' row is the reference
 for this subset rather than the paper's number.
 
-    python controls/highd_accel_noise.py   -> results/highd_accel_noise.csv, highd_accel_noise_acf.csv, highd_accel_noise_gains.csv
+    python controls/highd_accel_noise.py   -> results/highd_accel_noise<TAG>.csv, _acf, _gains (TAG from highd_full.py:
+                                              '' for the first 23 recordings, '_60rec' for the full release)
+Each (state, split) block is cached in controls/work/highd_accel_noise<TAG>/ (atomic writes); a restart skips finished blocks.
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
+import os, pickle
 import numpy as np, pandas as pd
 import highd_augment as h
 import highd_full as hf
@@ -42,8 +45,13 @@ if __name__ == '__main__':
     print('steps', len(i), 'vehicles', len(np.unique(uid[i])), flush=True)
     rows = []
     sgn = S['dir'].to_numpy().astype(float)
+    WORK = P.CONTROLS_WORK / f'highd_accel_noise{hf.TAG}'; WORK.mkdir(parents=True, exist_ok=True)
     for state in ('signed_v', 'speed'):
       for sp in range(3):
+        blk = WORK / f'{state}_s{sp}.pkl'
+        if blk.exists():
+            rows += pickle.load(open(blk, 'rb')); print(state, 'split', sp, '(cached)', flush=True); continue
+        r0 = len(rows)
         rng = np.random.default_rng(100 + sp); u = rng.permutation(np.unique(uid[i])); tr = np.isin(uid[i], u[:int(.8 * len(u))])
         for d in DEFS:
             v = S['v_' + d].to_numpy().astype(float); a = S['a_' + d].to_numpy().astype(float)
@@ -58,15 +66,16 @@ if __name__ == '__main__':
             for name, cols in MODELS.items():
                 ltr, lva, nc = h.eval_model(T, V, cols, RADIX, 20, alpha=0.5)
                 rows.append(dict(state=state, split=sp, definition=d, model=name, train=ltr, val=lva, nctx=nc, n_val=len(V['y'])))
+        pickle.dump(rows[r0:], open(str(blk) + '.tmp', 'wb')); os.replace(str(blk) + '.tmp', blk)
         print(state, 'split', sp, flush=True)
-    R = pd.DataFrame(rows); R.to_csv(P.out(P.CONTROLS_RESULTS / 'highd_accel_noise.csv'), index=False)
+    R = pd.DataFrame(rows); R.to_csv(P.out(P.CONTROLS_RESULTS / f'highd_accel_noise{hf.TAG}.csv'), index=False)
     Gs = []
     for state, Rs in R.groupby('state'):
         M = Rs.groupby(['definition', 'model']).val.mean().unstack(0)[DEFS]
         G = pd.DataFrame({k: M.loc[a_] - M.loc[b_] for k, (a_, b_) in GAINS.items()}).T
         G.index.name = 'gain (nats/step)'; G.insert(0, 'state', state); Gs.append(G)
         print(state); print(M.round(4))
-    G = pd.concat(Gs); G.to_csv(P.out(P.CONTROLS_RESULTS / 'highd_accel_noise_gains.csv'))
+    G = pd.concat(Gs); G.to_csv(P.out(P.CONTROLS_RESULTS / f'highd_accel_noise{hf.TAG}_gains.csv'))
     # acceleration autocorrelation, lags 0.2 ... 3 s, pairs within one vehicle and consecutive 0.2 s rows
     acf = []
     same = lambda L: (uid[L:] == uid[:-L]) & (fr[L:] - fr[:-L] == L * hf.DS)
@@ -75,7 +84,7 @@ if __name__ == '__main__':
         for L in range(1, 16):
             m = same(L) & np.isfinite(a[L:]) & np.isfinite(a[:-L])
             acf.append(dict(definition=d, lag=L, lag_s=0.2 * L, acf=float(np.corrcoef(a[L:][m], a[:-L][m])[0, 1]), n=int(m.sum())))
-    A = pd.DataFrame(acf); A.to_csv(P.out(P.CONTROLS_RESULTS / 'highd_accel_noise_acf.csv'), index=False)
+    A = pd.DataFrame(acf); A.to_csv(P.out(P.CONTROLS_RESULTS / f'highd_accel_noise{hf.TAG}_acf.csv'), index=False)
     pd.set_option('display.width', 200)
     print(G.round(4).to_string())
     print(A.pivot(index='lag_s', columns='definition', values='acf')[DEFS].round(3))

@@ -16,17 +16,20 @@ delay of about 1 s, so the leader's earlier state could matter. Here:
   cross-check k-nearest-neighbour CMI (Frenzel-Pompe, k = 10, max-norm, rank-transformed variables) of y and dv_{t-k}
               given the base state on 3 000 random samples, with a local permutation test (Runge 2018: dv_{t-k}
               replaced by that of one of the 5 nearest neighbours in the base state; 30 permutations).
-Gains in nats per step and bits. Data: original highD release, 23 recordings (see highd_full.py).
+Gains in nats per step and bits. Data: original highD release, the 23 recordings of the first run or all 60 (see highd_full.py).
 --lead-accel: the leader's own acceleration at t (dataset xAcceleration of the preceding vehicle, 5 bins) is added to
 the base state (samples where it is known), and its own gain over the base state is reported as added = 'a_lead'.
 If the lagged dv only stands in for the leader's acceleration (the trend of dv), its gain vanishes in this run.
 
     python controls/highd_reaction_delay.py                -> results/highd_reaction_delay.csv, _null.csv, _knn.csv
     python controls/highd_reaction_delay.py --lead-accel   -> results/highd_reaction_delay_leadacc.csv, _null, _knn
+Output names carry TAG from highd_full.py ('' for the first 23 recordings, '_60rec' for the full release). Each
+(horizon, split) block and each horizon's kNN check is cached in controls/work/highd_reaction_delay<SUF><TAG>/ (atomic
+writes); a restart skips finished blocks. Every block has its own seeds, so skipping does not change the others.
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
-import sys, time
+import os, pickle, sys, time
 import numpy as np, pandas as pd
 from scipy.special import digamma
 from scipy.stats import rankdata
@@ -86,6 +89,50 @@ def heldout_gain(train, test, inner):
     return np.log(probs(train, test, bb)).mean(), np.log(probs(train, test, bb, bf)).mean(), bb, bf
 
 
+# The same computations with the count lookups done once per split (10-22, for the 60-recording run, ~6x faster).
+# Every probability is formed by the same expression as in probs(), so the results are identical to the last bit
+# (checked against probs / heldout_gain on synthetic data; experiment_log/2026-10-22_p05_positive_control.md, part 3).
+def base_lookup(train, test):
+    p0 = (np.bincount(train['y'], minlength=NY) + 0.5) / (len(train['y']) + 0.5 * NY)
+    kb, nb, kcb, ncb = fit_counts(train['b'], train['y'])
+    return look(kb, nb, test['b'] * NY + test['y']), look(kcb, ncb, test['b']), p0[test['y']]
+
+
+def full_lookup(train, test):
+    kf, nf, kcf, ncf = fit_counts(train['f'], train['y'])
+    return look(kf, nf, test['f'] * NY + test['y']), look(kcf, ncf, test['f'])
+
+
+def pb_of(L, beta_b):
+    return (L[0] + beta_b * L[2]) / (L[1] + beta_b)
+
+
+def pf_of(F, pb, beta_f):
+    return (F[0] + beta_f * pb) / (F[1] + beta_f)
+
+
+class Split:
+    """Base-state lookups for one outer split (shared by every added variable and every permutation)."""
+    def __init__(self, train, test, inner):
+        self.inner = inner
+        itr = {k: v[inner] for k, v in train.items()}; iva = {k: v[~inner] for k, v in train.items()}
+        self.Lin, self.Lout = base_lookup(itr, iva), base_lookup(train, test)
+        self.bb = max(BETAS, key=lambda b: np.log(pb_of(self.Lin, b)).mean())
+        self.pin, self.pout = pb_of(self.Lin, self.bb), pb_of(self.Lout, self.bb)
+        self.ll_base = np.log(self.pout).mean()
+
+    def gain(self, train, test):
+        """Same as heldout_gain(train, test, inner) when train/test carry the base of this split."""
+        itr = {k: v[self.inner] for k, v in train.items()}; iva = {k: v[~self.inner] for k, v in train.items()}
+        Fin = full_lookup(itr, iva)
+        bf = max(BETAS, key=lambda b: np.log(pf_of(Fin, self.pin, b)).mean())
+        return self.ll_base, np.log(pf_of(full_lookup(train, test), self.pout, bf)).mean(), self.bb, bf
+
+    def null_gain(self, train, test, bf):
+        """Same as log P(y|base,lag) - log P(y|base) with the betas of the real fit (permutation null)."""
+        return np.log(pf_of(full_lookup(train, test), self.pout, bf)).mean() - self.ll_base
+
+
 def strat_perm(x, strata, rng):
     order = np.lexsort((rng.random(len(x)), strata))
     out = np.empty_like(x); idx = np.argsort(strata, kind='stable')
@@ -115,7 +162,13 @@ def local_perm_test(x, y, z, n_perm, rng, k=10, k_perm=5):
 if __name__ == '__main__':
     t0 = time.time()
     S = hf.load()
-    LEAD = '--lead-accel' in sys.argv; SUF = '_leadacc' if LEAD else ''
+    LEAD = '--lead-accel' in sys.argv; SUF = ('_leadacc' if LEAD else '') + hf.TAG
+    WORK = P.CONTROLS_WORK / f'highd_reaction_delay{SUF}'; WORK.mkdir(parents=True, exist_ok=True)
+    def cached(name):
+        f = WORK / name
+        return pickle.load(open(f, 'rb')) if f.exists() else None
+    def store(name, obj):
+        f = WORK / name; pickle.dump(obj, open(str(f) + '.tmp', 'wb')); os.replace(str(f) + '.tmp', f)
     v = S.v_ds.to_numpy().astype(float); a = S.a_ds.to_numpy().astype(float)
     if LEAD:   # the leader's dataset acceleration (along the driving direction) at the same frame
         own = pd.DataFrame({'luid': S.uid.to_numpy(), 'frame': S.frame.to_numpy(), 'a_lead': a})
@@ -130,6 +183,10 @@ if __name__ == '__main__':
         y_cont = v[t + hz] - v[t]
         print(f'h = {0.2 * hz:.1f} s: {len(t)} samples, {len(np.unique(uid[t]))} vehicles [{time.time() - t0:.0f}s]', flush=True)
         for sp in range(3):
+            blk = cached(f'h{hz}_s{sp}.pkl')
+            if blk is not None:
+                rows += blk[0]; nulls += blk[1]; print(f'  split {sp} (cached)', flush=True); continue
+            r0, n0 = len(rows), len(nulls)
             rng = np.random.default_rng(200 + sp)
             u = rng.permutation(np.unique(uid[t])); trv = set(u[:int(.8 * len(u))].tolist())
             tr = np.array([x in trv for x in uid[t]])
@@ -144,6 +201,7 @@ if __name__ == '__main__':
                 lb, lf, bb, bf = heldout_gain(dict(y=yb[tr], b=base0[tr], f=base[tr]), dict(y=yb[~tr], b=base0[~tr], f=base[~tr]), inner)
                 rows.append(dict(horizon_s=0.2 * hz, split=sp, added='a_lead', lag_s=0.0, ll_base=lb, ll_full=lf, gain_nats=lf - lb,
                                  gain_bits=(lf - lb) / np.log(2), beta_base=bb, beta_full=bf, n_test=int((~tr).sum())))
+            SP = Split(dict(y=yb[tr], b=base[tr]), dict(y=yb[~tr], b=base[~tr]), inner)
             feats = {}
             for k in LAGS:
                 feats[('dv', k)] = h.qbins(dv[t - k], E['d'])
@@ -154,7 +212,7 @@ if __name__ == '__main__':
                 R = 125 if name.startswith('dv@') else (25 if '+' in name else 5)
                 full = base * R + lag
                 trd = dict(y=yb[tr], b=base[tr], f=full[tr]); ted = dict(y=yb[~tr], b=base[~tr], f=full[~tr])
-                lb, lf, bb, bf = heldout_gain(trd, ted, inner)
+                lb, lf, bb, bf = SP.gain(trd, ted)
                 rows.append(dict(horizon_s=0.2 * hz, split=sp, added=name, lag_s=0.2 * k, ll_base=lb, ll_full=lf,
                                  gain_nats=lf - lb, gain_bits=(lf - lb) / np.log(2), beta_base=bb, beta_full=bf, n_test=int((~tr).sum())))
                 if sp == 0 and name in ('dv', 'gap'):
@@ -163,22 +221,29 @@ if __name__ == '__main__':
                         lp = strat_perm(lag, base, prng)
                         full = base * R + lp
                         trn = dict(y=yb[tr], b=base[tr], f=full[tr]); ten = dict(y=yb[~tr], b=base[~tr], f=full[~tr])
-                        g0 = np.log(probs(trn, ten, bb, bf)).mean() - np.log(probs(trn, ten, bb)).mean()   # betas of the real fit
+                        g0 = SP.null_gain(trn, ten, bf)                                    # betas of the real fit
                         nulls.append(dict(horizon_s=0.2 * hz, added=name, lag_s=0.2 * k, perm=r, gain_nats=g0))
+            store(f'h{hz}_s{sp}.pkl', (rows[r0:], nulls[n0:]))
             print(f'  split {sp} done [{time.time() - t0:.0f}s]', flush=True)
         # kNN CMI cross-check on 3 000 samples
-        rng = np.random.default_rng(500 + hz)
-        sel = rng.choice(len(t), min(3000, len(t)), replace=False)
-        rk = lambda w: (rankdata(w) / len(w) - 0.5) / 0.2887 + rng.normal(0, 1e-6, len(w))
-        Z = np.c_[rk(v[t][sel]), rk(a[t][sel]), rk(gap[t][sel]), rk(dv[t][sel])]
-        if LEAD: Z = np.c_[Z, rk(alead[t][sel])]
-        Y = rk(y_cont[sel])
-        for name, k in [('dv', 2), ('dv', 5), ('dv', 10), ('gap', 5)]:
-            X = rk((dv if name == 'dv' else gap)[t[sel] - k])
-            obs, nm, q975, p = local_perm_test(X, Y, Z, 30, np.random.default_rng(600 + hz * 10 + k))
-            knn.append(dict(horizon_s=0.2 * hz, added=name, lag_s=0.2 * k, cmi_nats=obs, null_mean=nm, null_q975=q975,
-                            excess_nats=obs - nm, excess_bits=(obs - nm) / np.log(2), p=p, n=len(sel)))
-        print(f'  kNN done [{time.time() - t0:.0f}s]', flush=True)
+        kb = cached(f'h{hz}_knn.pkl')
+        if kb is not None:
+            knn += kb; print('  kNN (cached)', flush=True)
+        else:
+          k0 = len(knn)
+          rng = np.random.default_rng(500 + hz)
+          sel = rng.choice(len(t), min(3000, len(t)), replace=False)
+          rk = lambda w: (rankdata(w) / len(w) - 0.5) / 0.2887 + rng.normal(0, 1e-6, len(w))
+          Z = np.c_[rk(v[t][sel]), rk(a[t][sel]), rk(gap[t][sel]), rk(dv[t][sel])]
+          if LEAD: Z = np.c_[Z, rk(alead[t][sel])]
+          Y = rk(y_cont[sel])
+          for name, k in [('dv', 2), ('dv', 5), ('dv', 10), ('gap', 5)]:
+              X = rk((dv if name == 'dv' else gap)[t[sel] - k])
+              obs, nm, q975, p = local_perm_test(X, Y, Z, 30, np.random.default_rng(600 + hz * 10 + k))
+              knn.append(dict(horizon_s=0.2 * hz, added=name, lag_s=0.2 * k, cmi_nats=obs, null_mean=nm, null_q975=q975,
+                              excess_nats=obs - nm, excess_bits=(obs - nm) / np.log(2), p=p, n=len(sel)))
+          store(f'h{hz}_knn.pkl', knn[k0:])
+          print(f'  kNN done [{time.time() - t0:.0f}s]', flush=True)
         pd.DataFrame(rows).to_csv(P.out(P.CONTROLS_RESULTS / f'highd_reaction_delay{SUF}.csv'), index=False)
         pd.DataFrame(nulls).to_csv(P.out(P.CONTROLS_RESULTS / f'highd_reaction_delay{SUF}_null.csv'), index=False)
         pd.DataFrame(knn).to_csv(P.out(P.CONTROLS_RESULTS / f'highd_reaction_delay{SUF}_knn.csv'), index=False)
