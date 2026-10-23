@@ -8,5 +8,5 @@ airports/data/
 ```
 
 Download: https://www.transtats.bts.gov/Tables.asp?DB_ID=125 (Airline Origin and Destination Survey, DB1B).
-The paper uses 2024 Q1 (511 407 valid paths, 436 airports, mean path length 3.39).
+The analysis uses 2024 Q3 and Q4 (`db1b.public.202409.asc`, `db1b.public.202412.asc`): 5 114 707 and 5 186 452 itineraries, 452 and 450 airports, mean length 3.39 and 3.37 airports.
 Model weights and rollouts of `lstm_rnn_predict.ipynb` go to `airports/output/` (git-ignored).

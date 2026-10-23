@@ -1,0 +1,2 @@
+grid,ref_dist_m,visits,share_in_previous_cell,share_fix_just_before_entry,seconds_back_median,seconds_back_q25,seconds_back_q75,metres_back_median,metres_back_q25,metres_back_q75
+0.002,50.0,2014011,0.992460319233609,0.9877761342912228,30.0,16.0,61.0,253.49255872591317,158.74626565615512,509.66786082170285

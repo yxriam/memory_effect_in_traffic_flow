@@ -1,6 +1,10 @@
 """Taxi origin memory, pooled over the staged vehicles on a global grid (vehicles share coordinates).
 Trips: split at dwells >= 5 min in one cell or gaps > 15 min. Origin = trip start on a 10x coarser grid.
-Steps >= K0 cells after trip start. Stability: 20 random half-samples of vehicles (no replacement; duplicating vehicles would bias plug-in CMI)."""
+Steps >= K0 cells after trip start. Stability: 20 random half-samples of vehicles (no replacement; duplicating vehicles would bias plug-in CMI).
+Fix 2026-10-22: the time stamps were converted with astype('int64') // 10**9, which assumes nanoseconds. pandas 3 parses
+these strings to microseconds, so the times were in units of 1000 s, no dwell or gap was ever detected and every vehicle
+was one trip of the whole day (100 trips, median 870 cells). The conversion now gives seconds for any datetime unit
+(1,019 trips, median 48 cells, on the 0.002 grid). The trip-level test on passenger trips is taxi_occupied_trips.py."""
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
 import glob, os, numpy as np, pandas as pd, sys
@@ -11,7 +15,8 @@ rows = []; used = []
 import json
 PICK = [os.path.join(str(P.TAXI_RAW), x) for x in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'taxi_pick.json')))]
 for vid, f in enumerate([p for p in PICK if os.path.exists(p)]):
-    d = pd.read_csv(f, header=None, usecols=[1, 2, 3]); d[1] = pd.to_datetime(d[1]).astype('int64') // 10**9
+    d = pd.read_csv(f, header=None, usecols=[1, 2, 3])
+    d[1] = (pd.to_datetime(d[1]) - pd.Timestamp('1970-01-01')).dt.total_seconds().astype(np.int64)  # seconds whatever the datetime unit (10-22 fix)
     d = d.sort_values(1); t, lon, lat = d[1].to_numpy(), d[2].to_numpy(), d[3].to_numpy()
     ok = (lon > 120.8) & (lon < 122.2) & (lat > 30.6) & (lat < 31.9); t, lon, lat = t[ok], lon[ok], lat[ok]
     if len(t) < 30: continue

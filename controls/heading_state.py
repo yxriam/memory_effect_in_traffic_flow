@@ -28,6 +28,8 @@ in controls/work/heading_state/taxi_fixes.pkl.
     python controls/heading_state.py geolife 0.001     -> results/heading_state_geolife_100m.csv
     python controls/heading_state.py geolife 0.0001    -> results/heading_state_geolife_10m.csv
     python controls/heading_state.py taxi 0.002        -> results/heading_state_taxi_200m.csv
+    python controls/heading_state.py taxi_device 0.002 -> results/heading_state_taxi_200m_device.csv (device heading; 3 rows)
+    python controls/heading_state.py taxi_reffix 0.002 -> results/heading_state_taxi_200m_reffix.csv (where the position heading comes from)
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
@@ -298,9 +300,135 @@ def run_taxi(g):
     return R
 
 
+
+# ---------------------------------------------------------------- taxi with the device's own heading and speed (10-22)
+# The raw records are: id, time, lon, lat, speed (km/h), direction (units of 2 degrees), occupancy status. A first check
+# (10-22) had taken columns 5 and 6 the other way round and compared them with forward differences dominated by GPS
+# jumps; with centred differences the speed field has Spearman 0.56 with the position speed and twice the direction
+# field is within 45 degrees of the position bearing for 86 % of moving records (median difference 17 degrees).
+# This variant takes the heading and speed of each cell visit from the device record at the entry fix, so the
+# heading is measured at the present instant rather than estimated from earlier fixes.
+def taxi_fixes_device():
+    cache = WORK / 'taxi_fixes_device.pkl'
+    if cache.exists():
+        return pd.read_pickle(cache)
+    parts = []
+    for f in sorted(glob.glob(os.path.join(str(P.TAXI_RAW), 'Taxi_*'))):
+        d = pd.read_csv(f, header=None, names=['id', 't', 'lon', 'lat', 'v', 'h', 's'], skipinitialspace=True, usecols=[1, 2, 3, 4, 5])
+        d['t'] = pd.to_datetime(d.t, errors='coerce'); d = d.dropna()
+        d = d[(d.lon > 120) & (d.lon < 123) & (d.lat > 30) & (d.lat < 32.5)].sort_values('t').drop_duplicates('t')
+        d['file'] = os.path.basename(f); parts.append(d)
+    D = pd.concat(parts, ignore_index=True)
+    D['ts'] = (D.t - pd.Timestamp('2007-02-20')).dt.total_seconds()
+    WORK.mkdir(parents=True, exist_ok=True); tmp = str(cache) + '.tmp'; D.to_pickle(tmp); os.replace(tmp, cache)
+    return D
+
+
+def runs_device(lat, lon, g, v, hdir):
+    """As runs(), but heading = sector of the device direction (2 * field, degrees) and speed = device speed, both at
+    the entry fix; heading unknown (8) when the device speed is zero."""
+    la = np.floor(lat / g).astype(np.int64); lo = np.floor(lon / g).astype(np.int64)
+    key = la * 10_000_000 + lo
+    if len(key) == 0:
+        return [np.zeros(0, np.int64)] * 3 + [np.zeros(0)]
+    e = np.where(np.r_[True, key[1:] != key[:-1]])[0]
+    side = (np.minimum((lat[e] / g - la[e]) * 3, 2.999).astype(int) * 3 + np.minimum((lon[e] / g - lo[e]) * 3, 2.999).astype(int))
+    deg = (2.0 * hdir[e]) % 360.0
+    head = np.where(v[e] > 0, ((deg + 22.5) // 45).astype(np.int64) % 8, 8)
+    spd = np.where(v[e] > 0, v[e].astype(float), np.nan)
+    return key[e], head, side, spd
+
+
+def sub_rows(T, m):
+    return {k: v[m] for k, v in T.items()}
+
+
+def run_taxi_device(g):
+    """Same split and tests as run_taxi, with the labels from the device record. Three cases, each two units (tuned
+    held-out part, CMI part) written atomically and skipped on a restart:
+      device heading, all visits                   heldout_tuned.json, cmi.json
+      device heading, visits with device speed > 0 heldout_tuned_moving.json, cmi_moving.json
+      position heading, the same moving visits     heldout_tuned_moving_position.json, cmi_moving_position.json
+    The device heading is unknown (label 8) when the device speed at the entry fix is zero (15 % of visits); the two
+    'moving' cases compare the two headings on the same trigrams (rows selected by the device label at S_t, in the
+    inner-train, validation, training and test parts alike)."""
+    wd = WORK / f'taxi_device_{g:g}'; wd.mkdir(parents=True, exist_ok=True)
+    units = {('device', 'all'): (wd / 'heldout_tuned.json', wd / 'cmi.json'),
+             ('device', 'moving'): (wd / 'heldout_tuned_moving.json', wd / 'cmi_moving.json'),
+             ('position', 'moving'): (wd / 'heldout_tuned_moving_position.json', wd / 'cmi_moving_position.json')}
+    if not all(f.exists() for pair in units.values() for f in pair):
+        D = taxi_fixes_device(); seqs = {'device': ([], [], []), 'position': ([], [], [])}
+        for f, d in D.groupby('file', sort=True):
+            lat, lon, ts, v, h = d.lat.to_numpy(), d.lon.to_numpy(), d.ts.to_numpy(), d.v.to_numpy(), d.h.to_numpy()
+            cut = np.r_[0, np.where(np.diff(ts) > 300)[0] + 1, len(ts)]
+            test = zlib.crc32(f.encode()) % 5 == 0
+            for a, b in zip(cut[:-1], cut[1:]):
+                r = runs_device(lat[a:b], lon[a:b], g, v[a:b], h[a:b]); q = runs(lat[a:b], lon[a:b], g, t=ts[a:b], ref=REF_DIST[g])
+                assert np.array_equal(r[0], q[0])
+                for src, x in (('device', r), ('position', q)):
+                    s_tr, s_te, s_all = seqs[src]; s_all.append(x); (s_te if test else s_tr).append(x)
+        nveh = int(D.file.nunique()); del D
+        dv = seqs['device']; ai, bi = inner_split(dv[0])
+        mask = dict(inner=stack(ai, bi)[0]['h'] < 8, split=stack(dv[0], dv[1])[0]['h'] < 8, all=trigram_table(dv[2])['h'] < 8)
+        for (src, sub), (f_t, f_c) in units.items():
+            if f_t.exists() and f_c.exists():
+                continue
+            s_tr, s_te, s_all = seqs[src]
+            a, b = inner_split(s_tr); Tin, trin = stack(a, b); T, tr = stack(s_tr, s_te); Tall = trigram_table(s_all)
+            if sub == 'moving':
+                Tin, trin = sub_rows(Tin, mask['inner']), trin[mask['inner']]; T, tr = sub_rows(T, mask['split']), tr[mask['split']]
+                Tall = sub_rows(Tall, mask['all'])
+            if not f_t.exists():
+                unit = 'all vehicle files, device heading' if sub == 'all' else f'all vehicle files, {src} heading, moving visits'
+                atomic_json(f_t, dict(unit=unit, vehicles=nveh, n_train=int(tr.sum()), n_test=int((~tr).sum()),
+                                      share_heading_known=float((T['h'] < 8).mean()), **heldout_tuned(Tin, trin, T, tr)))
+                print(f'taxi ({src}, {sub}) tuned held-out part done', flush=True)
+            if not f_c.exists():
+                seed = zlib.crc32((f'taxi-device|{g}|pooled' if sub == 'all' else f'taxi-device|{g}|{src}|{sub}').encode())
+                atomic_json(f_c, cmi_part(Tall, seed)); print(f'taxi ({src}, {sub}) CMI part done', flush=True)
+    rows = []
+    for (src, sub), (f_t, f_c) in units.items():
+        rows.append(dict(heading=src, visits=sub, **json.load(open(f_t)), **json.load(open(f_c))))
+    R = pd.DataFrame(rows)
+    R.to_csv(P.out(P.CONTROLS_RESULTS / f'heading_state_taxi_{round(g * 1e5):d}m_device.csv'), index=False)
+    return R
+
+def taxi_reference_fix(g):
+    """Where the position-based taxi heading comes from (10-22 review): for every visit after the first of a segment, is
+    the reference fix (latest earlier fix at least REF_DIST away) in the previous cell, is it the fix just before the
+    entry, and how far back is it in time and distance. Deterministic. -> results/heading_state_taxi_<g>_reffix.csv"""
+    D = taxi_fixes_device(); ref = REF_DIST[g]; rows = []
+    for f, d in D.groupby('file', sort=True):
+        lat, lon, ts = d.lat.to_numpy(), d.lon.to_numpy(), d.ts.to_numpy()
+        cut = np.r_[0, np.where(np.diff(ts) > 300)[0] + 1, len(ts)]
+        for a, b in zip(cut[:-1], cut[1:]):
+            la, lo, t = lat[a:b], lon[a:b], ts[a:b]
+            key = np.floor(la / g).astype(np.int64) * 10_000_000 + np.floor(lo / g).astype(np.int64)
+            if len(key) < 2:
+                continue
+            e = np.where(np.r_[True, key[1:] != key[:-1]])[0]; cosl = np.cos(np.radians(np.nanmean(la)))
+            found = np.full(len(e), -1)
+            for k in range(1, LOOKBACK + 1):
+                j = e - k; ok = (j >= 0) & (found < 0)
+                if not ok.any():
+                    break
+                jj = np.where(ok, j, 0)
+                hit = ok & (np.hypot((lo[e] - lo[jj]) * cosl * 111320.0, (la[e] - la[jj]) * 110540.0) >= ref); found[hit] = jj[hit]
+            i = np.arange(1, len(e)); r = found[1:]; ok = r >= 0; i, r = i[ok], r[ok]
+            rows.append(np.c_[key[r] == key[e[i - 1]], r == e[i] - 1, t[e[i]] - t[r],
+                              np.hypot((lo[e[i]] - lo[r]) * cosl * 111320.0, (la[e[i]] - la[r]) * 110540.0)])
+    X = np.vstack(rows)
+    q = lambda c, p: float(np.percentile(X[:, c], p))
+    R = pd.DataFrame([dict(grid=g, ref_dist_m=ref, visits=len(X), share_in_previous_cell=float(X[:, 0].mean()),
+                           share_fix_just_before_entry=float(X[:, 1].mean()), seconds_back_median=q(2, 50), seconds_back_q25=q(2, 25),
+                           seconds_back_q75=q(2, 75), metres_back_median=q(3, 50), metres_back_q25=q(3, 25), metres_back_q75=q(3, 75))])
+    R.to_csv(P.out(P.CONTROLS_RESULTS / f'heading_state_taxi_{round(g * 1e5):d}m_reffix.csv'), index=False)
+    return R
+
+
 if __name__ == '__main__':
     ds, g = sys.argv[1], float(sys.argv[2])
-    R = run_geolife(g) if ds == 'geolife' else run_taxi(g)
+    R = {'geolife': run_geolife, 'taxi': run_taxi, 'taxi_device': run_taxi_device, 'taxi_reffix': taxi_reference_fix}[ds](g)
     pd.set_option('display.width', 250)
     num = R.select_dtypes('number')
     print(num.median().round(5).to_string() if len(R) > 1 else num.T.round(5).to_string())

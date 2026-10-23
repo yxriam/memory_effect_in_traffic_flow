@@ -1,0 +1,211 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1792743515454,
+  "projectRoot": "D:\\documents\\HZNU\\project\\memory_effect_in_traffic_flow",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "requirements.txt"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "pip",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "airports": {
+      "path": "airports",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1792743515315,
+      "keyFiles": [
+        "airports_sequences_split.py",
+        "airport_dict.json",
+        "airport_memory.py",
+        "city_markov_sankey.py",
+        "fig_airline_memory.py"
+      ]
+    },
+    "common": {
+      "path": "common",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1792743515316,
+      "keyFiles": [
+        "fig_style.py",
+        "paths.py",
+        "__init__.py"
+      ]
+    },
+    "controls": {
+      "path": "controls",
+      "purpose": null,
+      "fileCount": 35,
+      "lastAccessed": 1792743515349,
+      "keyFiles": [
+        "accel_acf.py",
+        "build_trips_by_mode.py",
+        "coarse_model.py",
+        "dfa_control.py",
+        "geolife_heldout_tuned.py"
+      ]
+    },
+    "experiment_log": {
+      "path": "experiment_log",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1792743515352,
+      "keyFiles": [
+        "2026-10-19_paper1_verification.md",
+        "2026-10-20_paper_v3_integration.md",
+        "2026-10-22_p05_positive_control.md",
+        "2026-10-23_airports_memory.md",
+        "TEMPLATE.md"
+      ]
+    },
+    "geolife": {
+      "path": "geolife",
+      "purpose": null,
+      "fileCount": 17,
+      "lastAccessed": 1792743515353,
+      "keyFiles": [
+        "00_check_environment.py",
+        "01_preprocess_no_leakage.py",
+        "02b_global_numpy.py",
+        "02_memory_flow_metrics.py",
+        "03_memory_driver_correlation.py"
+      ]
+    },
+    "hangzhou": {
+      "path": "hangzhou",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1792743515354,
+      "keyFiles": [
+        "CODEX_TASK.md"
+      ]
+    },
+    "highD": {
+      "path": "highD",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1792743515355,
+      "keyFiles": [
+        "highd_experiment_record.md",
+        "highd_memory_analysis.ipynb"
+      ]
+    },
+    "prediction": {
+      "path": "prediction",
+      "purpose": null,
+      "fileCount": 19,
+      "lastAccessed": 1792743515355,
+      "keyFiles": [
+        "ch5_learning_curve.py",
+        "ch6_extra.py",
+        "ch6_networks.py",
+        "export_data.py",
+        "export_surrogates.py"
+      ]
+    },
+    "tasks": {
+      "path": "tasks",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1792743515357,
+      "keyFiles": [
+        "README.md",
+        "T01_taxi_heading_shuffle.md",
+        "T03_prediction_design.md",
+        "TEMPLATE.md"
+      ]
+    },
+    "taxi": {
+      "path": "taxi",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1792743515357,
+      "keyFiles": [
+        "memory_backoff_sweep.csv",
+        "memory_backoff_sweep_global.csv",
+        "memory_backoff_tuned_summary.csv",
+        "memory_full_per_file.csv",
+        "memory_full_per_file_global.csv"
+      ]
+    },
+    "tools": {
+      "path": "tools",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1792743515357,
+      "keyFiles": [
+        "check_paper_numbers.py"
+      ]
+    },
+    "airports\\data": {
+      "path": "airports\\data",
+      "purpose": "Data files",
+      "fileCount": 1,
+      "lastAccessed": 1792743515359,
+      "keyFiles": [
+        "README.md"
+      ]
+    },
+    "highD\\data": {
+      "path": "highD\\data",
+      "purpose": "Data files",
+      "fileCount": 1,
+      "lastAccessed": 1792743515361,
+      "keyFiles": [
+        "README.md"
+      ]
+    },
+    "prediction\\data": {
+      "path": "prediction\\data",
+      "purpose": "Data files",
+      "fileCount": 18,
+      "lastAccessed": 1792743515362,
+      "keyFiles": [
+        "geolife_bj500m.json",
+        "geolife_bj500m.npz",
+        "highd_v100.json"
+      ]
+    },
+    "taxi\\data": {
+      "path": "taxi\\data",
+      "purpose": "Data files",
+      "fileCount": 1,
+      "lastAccessed": 1792743515363,
+      "keyFiles": [
+        "README.md"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

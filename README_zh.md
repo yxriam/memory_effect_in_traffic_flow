@@ -28,7 +28,7 @@
 | 条件互信息 `I(S_{t+1}; S_{t-1} \| S_t)` + 分层置换零分布 | 二阶记忆的信息论**上限** | 出租车 |
 | 熵减 `H(next \| current) − H(next \| prev, current)` | 一阶流表示所隐藏的记忆 | GeoLife |
 | 速度自相关 + 广义朗之万记忆核 | 速度长记忆的形状与幂律衰减 | highD、GeoLife（按交通方式） |
-| 桑基图回流分析、RNN 与 LSTM 对比 | O-D 路径中"返回出发地"的定性记忆 | 机场（BTS DB1B） |
+| 分层置换零模型下的 CMI、回退平滑链的留出评估、“起点＋当前机场”状态 | 航空行程中的记忆：返程与行程起点 | 机场（BTS DB1B，2024 年第 3、4 季度） |
 
 仓库按**每个数据集一个自包含文件夹**组织。每个文件夹要么几秒钟内从缓存结果端到端复现，要么通过一个开关从原始数据完整重算。
 
@@ -36,7 +36,7 @@
 
 ## ✨ 特点
 
-- 🧪 **四个数据集，一个问题** —— 高速公路车辆（highD）、上海出租车（SUVnet GPS）、182 位 GeoLife 用户、51.1 万条 BTS 航空 O-D 路径。
+- 🧪 **四个数据集，一个问题** —— 高速公路车辆（highD）、上海出租车（SUVnet GPS）、182 位 GeoLife 用户、2024 年第 3、4 季度约 511 万和 519 万条 BTS 航空行程。
 - 📓 **Notebook 优先、缓存优先** —— highD 与出租车分析各是一份 notebook，每一步都写明*为什么做、预期什么、如何解读*；`RUN_COMPUTE = False` 时几秒钟内由随仓库发布的 CSV/NPZ 缓存复现全部表格与图。
 - 🎨 **可直接投稿的图** —— Nature 配色的多面板图（600 dpi `.png` + `.pdf`），由 notebook 自动生成。
 - 🔍 **诚实的估计量分析** —— 我们证明出租车数据上二阶收益的*符号*取决于平滑估计量（add-α 与 back-off β），并在训练段内部验证集上调 β；信息论上限（CMI）与实际实现的收益并列报告。
@@ -96,14 +96,14 @@ LRT（2 vs 1）：G = 1.08 × 10⁶，770 万步，p ≈ 0。VACF 非指数衰�
 | 状态压缩 | 状态中加入更细的速度和加速度（highD，0.2 s） | `v_{t-1}` 的增益：20 箱时 0.076 nats → 100 箱 + 加速度后 **0.007 nats**；在 `v` 上无记忆的 AR(1) 替代序列在 20 箱下已产生约一半增益 |
 | 诊断量偏差 | 滞后 1 自相关相同的 AR(1) 替代序列 | 真实数据 R/S Hurst 0.87–0.96，马尔科夫替代序列 0.83–0.98；记忆核指数随拟合窗口改变 |
 
-剩下的是浅的、基本止于二阶的路径记忆；只看 4 步的 LSTM 对出租车格子的预测与看 128 步的一样好。
+剩下的依赖很浅，集中在最近几步、以前一步为主，而且相当一部分是网格状态里缺少的信息：在出租车 200 m 全局网格的合并估计中，把设备记录的行驶方向和格内位置放进状态后，前一格子的留出增益只剩 17%。
 每个脚本 → 表 → 图的对应见 [`controls/README.md`](controls/README.md) 和 [`prediction/README.md`](prediction/README.md)。
 </details>
 
 <details>
-<summary><b>机场 —— BTS DB1B O-D 调查，2024 年第 1 季度（511 407 条路径，436 个机场）</b></summary>
+<summary><b>机场 —— BTS DB1B 航空行程，2024 年第 3、4 季度（约 511 万和 519 万条行程、约 450 个机场）</b></summary>
 
-在一阶链或 RNN 下，经过枢纽（如 DEN）之后到达的机场与旅客来自哪里无关；二阶链或 LSTM 则再现了占主导的**返回出发地**流（1000 步滚动预测的三步返回率 0.97，RNN 为 0.00）。代码见 [`airports/`](airports/)。
+前一站超出零模型的信息为每步约 1.5 bits（约占下一站不确定性的四分之一，这一相对量与 GeoLife 中自行车、地铁相近），前一站带来的留出收益中约 70% 来自 **A→B→A 返程**（占 33–36% 的步，一阶链只给出 4%），与 Rosvall 等（2014）用同一数据源得到的结果一致。与 GPS 轨迹不同，依赖能越过前一步：在最近三站之外，行程起点仍携带约 2.2 bits。这是真实的长程记忆，但集中在起点这一个变量上：以“起点＋当前机场”为上下文的模型与四阶链预测得一样好，在前面至少有 4 站的步上更好；这些步中约 91% 的 4 站窗口本身就包含起点，所以优势来自上下文更紧凑、更省数据，而不是看得更远。代码见 [`airports/`](airports/)（`airport_memory.py`、`fig_airline_memory.py`）。
 </details>
 
 ---
@@ -151,6 +151,9 @@ memory_effect_in_traffic_flow/
 ├── local_paths.example.json      原始数据所在位置 → 复制为 local_paths.json（git 忽略）
 ├── common/                       paths.py（所有数据 / 结果位置）· fig_style.py（统一图样式）
 ├── EXPERIMENT_LOG.md             每次实验、重跑和核对的统一记录：数据 → 实验 → 结果 → 下一步（详细记录在 experiment_log/）
+├── STATUS.md                     研究现状：主线、结论、已知的薄弱处、任务清单
+├── AGENTS.md · CLAUDE.md         代码代理共用的规则（Codex 读 AGENTS.md；CLAUDE.md 为 Claude Code 导入它）
+├── tasks/                        交给代理的任务说明：一个任务一个文件，写明执行者和审查者
 ├── tools/check_paper_numbers.py  把论文里的每个数字和已提交的结果表逐项比对
 ├── requirements.txt              核心依赖（notebook）      requirements-full.txt  + GeoLife / 机场额外依赖
 ├── highD/                        🚗 高速公路车辆速度
@@ -185,7 +188,9 @@ memory_effect_in_traffic_flow/
     ├── airports_sequences_split.py        DB1B .asc → 按路径长度分组的机场代码序列
     ├── markov_chain.py                    变阶 MarkovChain（采样 / argmax 预测、滚动生成）
     ├── city_markov_sankey.py              城市级一阶 vs 二阶链 → 经枢纽的回流桑基图（图 3 上）
-    ├── lstm_rnn_predict.ipynb             RNN 与 LSTM 滚动预测、返回率、经 DEN 的桑基图（图 3 下）
+    ├── airport_memory.py                  与轨迹数据相同的对照下的记忆 → results/airport_memory.csv
+    ├── fig_airline_memory.py              作图：补全当前状态与加长历史 → figures/
+    ├── lstm_rnn_predict.ipynb             RNN 与 LSTM 滚动预测、经 DEN 的桑基图（图 3 下；滚动返回率不再使用）
     ├── model/ · dataloader/ · airport_dict.json
     └── data/                              ← DB1B .asc 与派生序列（git 忽略）
 ```
@@ -204,7 +209,7 @@ memory_effect_in_traffic_flow/
 | [highD](https://levelxdata.com/highd-dataset/) | 车辆速度记忆 | 60 个 `*_tracks.csv`，约 0.9 GB | `highD/data/` | 注册后免费学术使用；**禁止再分发** |
 | 上海出租车 GPS（上海交通大学 SUVnet，2007-02-20） | 网格转移记忆 | 4 316 个文件，约 350 MB | `taxi/data/Taxi_070220/` | 向原提供方获取 |
 | [GeoLife 1.3](https://www.microsoft.com/en-us/download/details.aspx?id=52367) | 熵减、按方式记忆 | 182 位用户，约 1.7 GB | `geolife/data_raw/Data/` | 微软研究院许可，非商业用途 |
-| [BTS DB1B 起止点调查](https://www.transtats.bts.gov/Tables.asp?DB_ID=125) | O-D 路径记忆、桑基图 | 2024 Q1 约 1 GB `.asc` | `airports/data/original_data/` | 公开（美国交通部） |
+| [BTS DB1B 起止点调查](https://www.transtats.bts.gov/Tables.asp?DB_ID=125) | O-D 路径记忆、桑基图 | 2024 年第 3、4 季度，各约 0.57 GB `.asc` | `airports/data/original_data/` | 公开（美国交通部） |
 
 ---
 
@@ -217,7 +222,8 @@ memory_effect_in_traffic_flow/
 | 表：出租车 CMI、add-α 与 back-off ΔLL、调参 β*、全局网格稳健性 | `taxi/taxi_memory_analysis.ipynb` §4–8（`memory_full_summary.csv`、`memory_backoff_tuned_summary.csv`） |
 | 图 2 / 图 3 出租车 | 同一 notebook → `taxi/figs/` |
 | GeoLife 熵减、相关性热力图、按方式 Hurst / 核 α、5 s 敏感性 | `geolife/` 流水线 → `outputs_clean/`（`summary_report.txt`、`02_memory_flow/`、`03_correlation_analysis/`、`04_mode_memory*/`、`figures/`） |
-| 图 3 机场桑基图（经芝加哥 / 经 DEN）、RNN 与 LSTM 返回率 | `airports/city_markov_sankey.py`、`airports/lstm_rnn_predict.ipynb` |
+| 图 3 机场桑基图（经芝加哥 / 经 DEN） | `airports/city_markov_sankey.py`、`airports/lstm_rnn_predict.ipynb` |
+| 航空记忆：零模型下的 CMI、留出评估、“起点＋当前机场”状态及其图 | `airports/airport_memory.py` → `airports/results/`；`airports/fig_airline_memory.py` → `airports/figures/` |
 | v2 对照：GeoLife 偏差零模型、highD 状态扩充与粗粒化替代序列、Hurst / 记忆核对照、持续时间与停站、按方式路径记忆、起点记忆 | `controls/*.py` → `controls/results/`，图由 `controls/figures/*.py` 生成（对应表见 `controls/README.md`） |
 | v2 预测：平滑方式比较、学习曲线、LSTM / Transformer、历史长度消融、记忆网络 | `prediction/*.py` → `prediction/results/`，图由 `prediction/figures/*.py` 生成 |
 

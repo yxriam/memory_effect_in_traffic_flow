@@ -21,6 +21,7 @@ _DEFAULTS = {
     'geolife_raw': ROOT / 'geolife' / 'data_raw' / 'Data',                     # GeoLife 1.3 user folders 000 ... 181
     'geolife_trips_by_mode': ROOT / 'geolife' / 'data_raw' / 'trips_by_mode_data',  # <mode>/plt/*.plt
     'geolife_cache': ROOT / 'geolife' / 'cache_clean',                         # 000.npz ... from geolife/01_preprocess_no_leakage.py
+    'airports_seq': ROOT / 'airports' / 'data' / 'sequences_split',            # <YYYYMM>/<YYYYMM>_<n>.txt from airports/airports_sequences_split.py
 }
 
 
@@ -50,6 +51,7 @@ TAXI_RAW = _CFG['taxi_raw']
 GEOLIFE_RAW = _CFG['geolife_raw']
 GEOLIFE_TRIPS_BY_MODE = _CFG['geolife_trips_by_mode']
 GEOLIFE_CACHE = _CFG['geolife_cache']
+AIRPORTS_SEQ = _CFG['airports_seq']
 
 # code and committed results inside the repository
 GEOLIFE_PIPELINE = ROOT / 'geolife'                 # v1 GeoLife scripts (04_mode_hurst_memory.py is reused)
@@ -79,7 +81,7 @@ def out(path):
 
 
 _PATTERN = {'highd_tracks': '*_tracks.csv', 'highd_full': '*_tracksMeta.csv', 'taxi_raw': '*', 'geolife_raw': '[0-9][0-9][0-9]',
-            'geolife_trips_by_mode': '*/plt/*.plt', 'geolife_cache': '*.npz'}
+            'geolife_trips_by_mode': '*/plt/*.plt', 'geolife_cache': '*.npz', 'airports_seq': '*/*_*.txt'}
 
 
 def check():

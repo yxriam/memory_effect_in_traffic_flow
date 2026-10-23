@@ -78,15 +78,25 @@ Second round (to-do list P3, 2026-10-22; record: `../experiment_log/2026-10-22_p
 | `multiple_testing.py` | P3-3 | `geolife_robust_per_user.csv`, `memory_by_mode_path.csv`, `../taxi/memory_full_per_file.csv` | `multiple_testing.csv` — Storey π₁, Benjamini–Hochberg share, bootstrap intervals |
 | `latent_mixture.py [grid]` | P3-7 | GeoLife cache | `latent_mixture_geolife_100m.csv` — mixture of K first-order chains (one class per trip) vs second order, random-class control |
 | `taxi_status_column.py` | P3-8 | `taxi_raw` | `taxi_status_column.csv` — runs of each value of the 7th column (duration, path, moving share) |
+| `heading_state.py taxi_reffix 0.002` | 10-22 | `taxi_raw` | `heading_state_taxi_200m_reffix.csv` — where the position-based taxi heading comes from (share of visits whose reference fix is the last fix in the previous cell; seconds and metres back) |
+| `heading_state.py taxi_device 0.002` | 10-22 | `taxi_raw` | `heading_state_taxi_200m_device.csv` — as `taxi 0.002`, with the heading and speed recorded by the device at the entry fix; 3 rows: device heading on all visits, and device vs position heading on the visits with recorded speed > 0 |
+| `taxi_occupied_trips.py` (`counts`) | 10-22 | `taxi_raw`, `taxi_pick.json` | `taxi_occupied_trips.csv` — origin, destination, third-order and remote-cell CMI on passenger trips (runs of occupied records with observed pick-up and drop-off; origin vs destination also on steps >= 3 cells from both trip ends), on vacant runs and, for comparison, on the dwell-delimited trips; `taxi_occupied_trip_counts.csv` — runs per criterion |
 | `geolife_heldout_tuned.py` | P3-9 | GeoLife cache | `geolife_heldout_tuned.csv` — held-out gains of orders 2 and 3 with the back-off strength tuned for each order |
 
 Each of these writes one file per unit (user, file, block) under `work/` with an atomic rename and skips finished
 units on a restart; seeds are fixed integers or `zlib.crc32` of a label.
 
-**Taxi origin memory.** The committed `taxi_origin_*.csv` came from the first 100 files of `taxi_pick.json`
-(Taxi_106 … Taxi_76698), all of which are usable. The script pools the first 100 usable files in list order and
-writes their names to `taxi_origin_<grid>_vehicles.txt`, so on a full copy of the data it picks exactly these
-files; re-running it on them reproduces both tables digit for digit (86 413 steps at 0.002°, checked 2026-10-19).
+**Taxi origin memory.** `taxi_origin.py` pools the first 100 usable files of `taxi_pick.json` in list order and
+writes their names to `taxi_origin_<grid>_vehicles.txt`. Until 2026-10-22 it (and the taxi part of
+`origin_vs_direction.py`) converted the time stamps with `astype('int64') // 10**9`, which assumes nanoseconds; pandas 3
+parses them to microseconds, so no dwell or gap was detected and every vehicle was one trip of the whole day (86 413
+steps at 0.002°). With the conversion fixed there are 1,019 trips and 82 800 steps at 0.002°. The 7th field of the raw
+records is the occupancy state, so the paper's trip-level test now uses passenger trips (`taxi_occupied_trips.py`);
+the dwell-delimited trips are kept for comparison.
+
+**Taxi record fields.** id, time, lon, lat, speed (km/h), direction (units of 2°; ×2 gives degrees clockwise from
+north), occupancy (0 vacant, 1 occupied; 2 and 3 on vehicles that do not move all day). Note that the data description
+of the release lists speed and direction in the opposite order; the values agree with the positions only in this one.
 
 `results/geolife_rerun_comparison.csv` records, item by item, the GeoLife numbers before and after the
 re-run on the official GeoLife 1.3 download (2026-10-13/14). The small changes it shows in the Hurst surrogates
@@ -106,11 +116,11 @@ by vehicle (seed 1). Fitted values are in `results/coarse_model_params.json`.
 | script | figure | inputs |
 |---|---|---|
 | `fig_geolife_bias.py` | `fig_geolife_bias.pdf` (Fig. 1) — plug-in vs null vs excess CMI, resolution, held-out gain with tuned back-off (redrawn 2026-10-22) | `geolife_robust_per_user.csv`, `geolife_heldout_tuned.csv` |
-| `fig_path_heading.py` | `fig_path_heading.pdf` (Fig. 9) — path memory and the heading; remote cells with and without the destination | `heading_state_*.csv`, `remote_destination_geolife.csv` |
+| `fig_path_heading.py` | `fig_path_heading.pdf` (Fig. 9) — path memory and the heading (taxi: heading recorded by the device); remote cells with and without the destination | `heading_state_geolife_*.csv`, `heading_state_taxi_200m_device.csv`, `remote_destination_geolife.csv` |
 | `fig_highd_aug.py` | `fig_highd_augment.pdf` — state augmentation, VACF, kernel | `augment_markov.csv`, `fine_resolution.csv`, `vacf_kernels.npz`, `vacf_summary.json` |
 | `fig_coarse_model.py` | `fig_coarse_model.pdf` — gain vs bins for data / AR(1) / AR(2), acceleration ACF | `coarse_model*.{csv,json}`, `highd_accel_acf.csv` |
 | `fig_hurst.py` | `fig_geolife_hurst_control.pdf` | `hurst_control.csv` |
-| `fig_three_layers.py` | `fig_three_layers.pdf` — speed memory, persistence vs stops, path memory, origin | `memory_by_mode_*.csv`, `row_persistence.csv`, `origin_memory_geolife.csv`, `taxi_origin_0.002.csv` |
+| `fig_three_layers.py` | `fig_three_layers.pdf` — speed memory, persistence vs stops, path memory, origin (taxi: passenger trips) | `memory_by_mode_*.csv`, `row_persistence.csv`, `origin_memory_geolife.csv`, `taxi_occupied_trips.csv` |
 | `fig_taxi_gridmode.py` | `fig_taxi_gridmode.pdf` — per-trajectory vs global grid | `../taxi/memory_*.csv` |
 | `fig_geolife_kernel.py` | `geolife_kernel.png` — kernel decay by mode (supplement) | `../geolife/outputs_clean/04_mode_memory/`, `geolife_kernel_window_sensitivity.csv` |
 | `fig_supplement_checks.py` | `fig_s_null_calibration`, `fig_s_reaction_delay`, `fig_s_accel_noise`, `fig_s_stops`, `fig_s_hurst_power`, `fig_s_positive_control` (to-do checks; the highD ones from the `_60rec` tables) | the tables of the checks above |

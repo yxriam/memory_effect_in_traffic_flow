@@ -2,12 +2,13 @@
 
   (a) Held-out gains with tuned back-off (P3-1), as a share of the second-order gain G2 of the same units:
       the heading alone (GA) and the previous cell once the heading is in the state (R). GeoLife: sums over
-      users weighted by test steps; taxi: all vehicles pooled.
+      users weighted by test steps; taxi: all vehicles pooled, heading = direction recorded by the device at the entry
+      fix (2026-10-22; before: bearing from the previous fix, which mostly lies in the previous cell).
   (b) Excess CMI I(S+; S- | S, heading) and the same with the heading shuffled within cells (power control), as a
       share of the excess I(S+; S- | S); sums over GeoLife users, pooled taxi sample.
   (c) Remote cells (P3-2): median excess I(S+; S(t-m) | last 3 cells) on steps at least 101 cells into a trip, alone,
       given the destination, and given a shuffled destination.
-Inputs: controls/results/heading_state_geolife_{10m,100m}.csv, heading_state_taxi_200m.csv,
+Inputs: controls/results/heading_state_geolife_{10m,100m}.csv, heading_state_taxi_200m_device.csv,
 remote_destination_geolife.csv. Sized for the text width (16 cm), text at 9-9.5 pt; numbers are in the caption.
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[2]))  # repository root
@@ -33,8 +34,10 @@ def label(ax, s):
 def shares():
     rows = []
     for lab, f, A in (('GeoLife\n10 m', 'heading_state_geolife_10m.csv', 'heading'), ('GeoLife\n100 m', 'heading_state_geolife_100m.csv', 'heading'),
-                      ('taxi\n200 m', 'heading_state_taxi_200m.csv', 'heading+side')):
+                      ('taxi\n200 m', 'heading_state_taxi_200m_device.csv', 'heading+side')):
         d = pd.read_csv(R / f)
+        if 'visits' in d:                                   # taxi: direction recorded by the device, all visits
+            d = d[(d.heading == 'device') & (d.visits == 'all')]
         h = d[d.G2_tuned.notna()]; w = h.n_test
         g2 = np.average(h.G2_tuned, weights=w)
         e = d[['E0', 'Eh', 'Eh_shuffled']].dropna().sum()

@@ -28,6 +28,13 @@ Thumbs.db
 *.log
 _audit/
 
+# ---- coding agents: Claude Code worktrees (claude --worktree) ----
+.claude/worktrees/
+
+# ---- Hangzhou smart-card data: per-record files and card-number tables stay local (hangzhou/CODEX_TASK.md) ----
+hangzhou/work/
+hangzhou/data/
+
 # ---- machine-specific settings (templates: local_paths.example.json, prediction/scripts/local_python.example.bat) ----
 local_paths.json
 prediction/scripts/local_python.bat

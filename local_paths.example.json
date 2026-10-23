@@ -5,5 +5,6 @@
   "taxi_raw": "D:/data/taxi/Taxi_070220",
   "geolife_raw": "D:/data/geolife_clean_pipeline/data_raw/Data",
   "geolife_trips_by_mode": "D:/data/geolife_clean_pipeline/data_raw/trips_by_mode_data",
-  "geolife_cache": "D:/data/geolife_clean_pipeline/cache_clean"
+  "geolife_cache": "D:/data/geolife_clean_pipeline/cache_clean",
+  "airports_seq": "D:/data/airports/sequences_split"
 }

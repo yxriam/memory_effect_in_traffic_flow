@@ -138,20 +138,14 @@ if og is not None:
     item('3 layers', 'GeoLife I_O|3 (median)', '0.0013', og.origin_beyond3_excess.median(), 4, ' bits')
     item('3 layers', 'GeoLife share sig. I_O', '43', 100 * (og.p_origin < .05).mean(), 0, ' %')
     item('3 layers', 'GeoLife share sig. I_O|3', '34', 100 * (og.p_origin3 < .05).mean(), 0, ' %')
-for G, vals in [('0.002', ('0.0148', '0.0058', '0.0024')), ('0.005', ('0.039', '0.015', '0.004'))]:
+for G, vals in [('0.002', ('0.0138', '0.0021', '0.0012')), ('0.005', ('0.038', '0.0033', '0.0022'))]:   # dwell-delimited trips (time unit fixed 10-22)
     t = rd(f'taxi_origin_{G}.csv')
     if t is None: continue
-    t = t.iloc[0]; d = len(vals[0].split('.')[1])
+    t = t.iloc[0]
     if G == '0.002':
-        ROWS.append(dict(group='3 layers', item='taxi pooled sample (200 m)', paper='100 vehicles, 86413 steps',
-                      recomputed=f'{int(t.n_veh)} vehicles, {int(t.n_steps)} steps', status='match' if (int(t.n_veh), int(t.n_steps)) == (100, 86413) else 'MISMATCH'))
-        item('3 layers', 'taxi permutation p (all three)', '0.0323', max(t.p3, t.p_origin, t.p_origin3), 4)
+        item('3 layers', 'dwell-delimited taxi trips: vehicles', '100', t.n_veh, 0)
     for k, v in zip(['cmi3', 'origin', 'origin3'], vals):
-        item('3 layers', f'taxi {k} ({G} deg grid)', v, t[k], d, ' bits')
-    if G == '0.002':
-        ROWS.append(dict(group='3 layers', item='taxi half-sample 95% ranges exclude 0', paper='yes',
-                      recomputed=', '.join(f'{k}: {t[k + "_lo"]:.4f}..{t[k + "_hi"]:.4f}' for k in ['cmi3', 'origin', 'origin3']),
-                      status='match' if all(t[k + '_lo'] > 0 for k in ['cmi3', 'origin', 'origin3']) else 'MISMATCH'))
+        item('3 layers', f'dwell-delimited taxi {k} ({G} deg grid)', v, t[k], len(v.split('.')[1]), ' bits')
 
 # ---------------------------------------------------------------- group 4: neural models and memory networks
 def js(name):
@@ -346,11 +340,13 @@ if og is not None:
     item(G5, 'GeoLife paired Wilcoxon, real vs shuffled S_t-10', '0.29', wilcoxon(og['I_O|3,10'], og['I_O|3,10shuf']).pvalue, 2)
 if ot is not None:
     o = ot.iloc[0]
-    for m, v in [(5, '0.0013'), (10, '0.0004'), (20, '0.0003')]:
-        item(G5, f'taxi I_{m}', v, o[f'I_{m}'], 4, ' bits')
-    item(G5, 'taxi origin CMI given 3 cells and S_t-10', '0.00003', o['I_O|3,10'], 5, ' bits'); item(G5, 'its p', '0.13', o['p_I_O|3,10'], 2)
-    item(G5, 'taxi origin CMI given 3 cells, vehicle, period: p', '1', o['p_I_O|3,veh,per'], 0)
-    item(G5, 'same strata shuffled', '0.0004', o['I_O|3,veh,per shuf'], 4, ' bits'); item(G5, 'its p', '0.005', o['p_I_O|3,veh,per shuf'], 3)
+    for m, v in [(5, '0.0012'), (10, '0.0003'), (20, '0.0003')]:                      # dwell-delimited trips (time unit fixed 10-22)
+        item(G5, f'taxi (dwell trips) I_{m}', v, o[f'I_{m}'], 4, ' bits')
+    for m, v in [(5, '0.005'), (10, '0.11'), (20, '0.03')]:
+        item(G5, f'taxi (dwell trips) p of I_{m}', v, o[f'p_I_{m}'], len(v.split('.')[1]))
+    item(G5, 'taxi origin CMI given 3 cells and S_t-10', '0.00003', o['I_O|3,10'], 5, ' bits'); item(G5, 'its p', '0.15', o['p_I_O|3,10'], 2)
+    item(G5, 'taxi origin CMI given 3 cells, vehicle, period', '0.00001', o['I_O|3,veh,per'], 5, ' bits'); item(G5, 'its p', '0.46', o['p_I_O|3,veh,per'], 2)
+    item(G5, 'same strata shuffled', '0.00003', o['I_O|3,veh,per shuf'], 5, ' bits'); item(G5, 'its p', '0.38', o['p_I_O|3,veh,per shuf'], 2)
 
 dj, dd = rd('taxi_dejitter_summary.csv'), rd('taxi_dejitter.csv')               # P1-5 (CMI)
 if dj is not None and dd is not None:
@@ -487,14 +483,36 @@ if h100 is not None and h10 is not None:
         item(G6, f'{lab}: summed excess left with shuffled heading', sh, 100 * S_.Eh_shuffled / S_.E0, 0, ' %'); item(G6, f'{lab}: summed excess left with real heading', rl, 100 * S_.Eh / S_.E0, 0, ' %')
     item(G6, '100 m: share significant given the heading', '58', 100 * (h100.p_h.dropna() < .05).mean(), 0, ' %')
     item(G6, '10 m: share significant given the heading', '51', 100 * (h10.p_h.dropna() < .05).mean(), 0, ' %')
-if htx is not None:
+if htx is not None:                                                               # heading estimated from positions (comparison, all visits)
     t = htx.iloc[0]
-    item(G6, 'taxi heading test: vehicle files', '4316', t.vehicles, 0)
-    item(G6, 'taxi: training steps (1.6 million)', '1.6', t.n_train / 1e6, 1, ' M'); item(G6, 'taxi: test steps (0.4 million)', '0.4', t.n_test / 1e6, 1, ' M')
-    item(G6, 'taxi: tuned G2', '0.40', t.G2_tuned, 2, ' bits'); item(G6, 'taxi: gain of heading + entry side', '0.33', t['GA_heading+side_tuned'], 2, ' bits')
-    item(G6, 'taxi: R with heading + entry side', '0.04', t['R_heading+side_tuned'], 2, ' bits')
-    item(G6, 'taxi: R / G2, heading + side (abstract "10 %")', '10', 100 * t['R_heading+side_tuned'] / t.G2_tuned, 0, ' %')
-    item(G6, 'taxi: R / G2, heading alone', '20', 100 * t.R_heading_tuned / t.G2_tuned, 0, ' %')
+    item(G6, 'taxi, heading from positions: R / G2, heading + side', '10', 100 * t['R_heading+side_tuned'] / t.G2_tuned, 0, ' %')
+    item(G6, 'taxi, heading from positions: R / G2, heading alone', '20', 100 * t.R_heading_tuned / t.G2_tuned, 0, ' %')
+hdv = rd('heading_state_taxi_200m_device.csv')                                   # heading recorded by the device (10-22)
+if hdv is not None:
+    a_ = hdv[(hdv.heading == 'device') & (hdv.visits == 'all')].iloc[0]
+    md = hdv[(hdv.heading == 'device') & (hdv.visits == 'moving')].iloc[0]; mp = hdv[(hdv.heading == 'position') & (hdv.visits == 'moving')].iloc[0]
+    item(G6, 'taxi heading test: vehicle files', '4316', a_.vehicles, 0)
+    item(G6, 'taxi: training steps (1.6 million)', '1.6', a_.n_train / 1e6, 1, ' M'); item(G6, 'taxi: test steps (0.4 million)', '0.4', a_.n_test / 1e6, 1, ' M')
+    item(G6, 'taxi: tuned G2 (also Fig. 9 caption)', '0.40', a_.G2_tuned, 2, ' bits')
+    item(G6, 'taxi, recorded heading: gain of heading + entry side', '0.33', a_['GA_heading+side_tuned'], 2, ' bits')
+    item(G6, 'taxi, recorded heading: R with heading + entry side', '0.07', a_['R_heading+side_tuned'], 2, ' bits')
+    item(G6, 'taxi, recorded heading: R / G2, heading + side (abstract, Table 6)', '17', 100 * a_['R_heading+side_tuned'] / a_.G2_tuned, 0, ' %')
+    item(G6, 'taxi, recorded heading: R / G2, heading alone', '32', 100 * a_.R_heading_tuned / a_.G2_tuned, 0, ' %')
+    item(G6, 'taxi: visits entered at zero recorded speed', '15', 100 * (1 - a_.share_heading_known), 0, ' %')
+    item(G6, 'taxi, moving visits: gain of the recorded heading alone', '0.43', md.GA_heading_tuned, 2, ' bits')
+    item(G6, 'taxi, moving visits: gain of the heading from positions alone', '0.36', mp.GA_heading_tuned, 2, ' bits')
+    item(G6, 'taxi, moving visits: R / G2, recorded heading', '16', 100 * md.R_heading_tuned / md.G2_tuned, 0, ' %')
+    item(G6, 'taxi, moving visits: R / G2, heading from positions', '12', 100 * mp.R_heading_tuned / mp.G2_tuned, 0, ' %')
+    item(G6, 'taxi, moving visits: G2', '0.45', md.G2_tuned, 2, ' bits')
+rf = rd('heading_state_taxi_200m_reffix.csv')
+if rf is not None:
+    r_ = rf.iloc[0]
+    item(G6, 'taxi position heading: reference fix in the previous cell', '99', 100 * r_.share_in_previous_cell, 0, ' %')
+    item(G6, 'its median time back', '30', r_.seconds_back_median, 0, ' s')
+    ROWS.append(dict(group=G6, item='its median distance back ("250 m")', paper='250 m', recomputed=f'{r_.metres_back_median:.1f} m',
+                     status='match' if abs(r_.metres_back_median - 250) < 5 else 'MISMATCH'))
+    item(G6, 'taxi CMI: excess left with the heading shuffled', '69', 100 * a_.Eh_shuffled / a_.E0, 0, ' %')
+    item(G6, 'taxi CMI: excess left with the recorded heading', '45', 100 * a_.Eh / a_.E0, 0, ' %')
 rm = rd('remote_destination_geolife.csv')                                          # P3-2
 if rm is not None:
     L_ = rm[rm['long:I_D'].notna()]
@@ -521,6 +539,37 @@ if lm_ is not None:
             ratios.append((s_[f'Rrand_K{K}{b}'] - s_[f'R_K{K}{b}']).median() / s_[f'G2own{b}'].median())
     item(G6, 'classes absorb beyond random classes: min share of G2', '1', 100 * min(ratios), 0, ' %')
     item(G6, 'classes absorb beyond random classes: max share of G2', '6', 100 * max(ratios), 0, ' %')
+
+G7 = '7 occupancy'                                                                  # taxi passenger trips (10-22)
+oc, occ_n = rd('taxi_occupied_trips.csv'), rd('taxi_occupied_trip_counts.csv')
+if occ_n is not None:
+    c1 = occ_n[occ_n.state == 1].iloc[0]
+    item(G7, 'complete passenger trips with >= 6 cells', '45124', c1.complete_6cells, 0); item(G7, 'their vehicles', '2141', c1.vehicles_with_trips, 0)
+if oc is not None:
+    o = oc.set_index('sample').loc['occ_all']
+    item(G7, 'passenger trips pooled', '45124', o.n_trips, 0); item(G7, 'vehicles', '2141', o.n_vehicles, 0); item(G7, 'steps >= 3 cells after pick-up', '343431', o.n_steps, 0)
+    for k, v in [('cmi3', '0.0105'), ('IO', '0.0086'), ('IO3', '0.0011')]:
+        item(G7, f'passenger trips: {k}', v, o[k], 4, ' bits')
+    item(G7, 'passenger trips: largest p of I_3, I_O, I_O|3 (1/51)', '0.0196', max(o.p_cmi3, o.p_IO, o.p_IO3), 4)
+    lo = [o[f'{k}_lo'] for k in ('cmi3', 'IO', 'IO3')]
+    ROWS.append(dict(group=G7, item='half-sample 95% ranges of I_3, I_O, I_O|3 exclude zero', paper='yes', recomputed=' / '.join(f'{x:.5f}' for x in lo),
+                     status='match' if min(lo) > 0 else 'MISMATCH'))
+    item(G7, 'symmetric steps (>= 3 cells from both trip ends)', '214064', o.n_steps_sym, 0)
+    item(G7, 'symmetric steps: destination I_D|3', '0.0036', o.ID3_sym, 4, ' bits'); item(G7, 'its p (1/51)', '0.0196', o.p_ID3_sym, 4)
+    item(G7, 'symmetric steps: origin I_O|3', '0.0004', o.IO3_sym, 4, ' bits'); item(G7, 'its p', '0.16', o.p_IO3_sym, 2)
+    item(G7, 'origin given L3 and destination', '0.0001', o.IO3_D, 4, ' bits'); item(G7, 'its p', '0.27', o.p_IO3_D, 2)
+    item(G7, 'origin given L3 and shuffled destination', '0.0002', o.IO3_Dsh, 4, ' bits'); item(G7, 'its p', '0.12', o.p_IO3_Dsh, 2)
+    item(G7, 'third-order residual given the destination', '0.0014', o.cmi3_D, 4, ' bits'); item(G7, 'its p (1/51)', '0.0196', o.p_cmi3_D, 4)
+    item(G7, 'given a shuffled destination', '0.0025', o.cmi3_Dsh, 4, ' bits')
+    item(G7, "the destination's own share (shuffled minus real)", '0.001', o.cmi3_Dsh - o.cmi3_D, 3, ' bits')
+    item(G7, 'remote steps (>= 11 cells after pick-up)', '87832', o.n_steps_remote, 0)
+    ROWS.append(dict(group=G7, item='cells 5 and 10 back: excess <= 0, p >= 0.7', paper='<= 0, >= 0.7',
+                     recomputed=f'{o.I5:.5f} / {o.I10:.5f}; p {o.p_I5:.2f} / {o.p_I10:.2f}', status='match' if max(o.I5, o.I10) <= 0 and min(o.p_I5, o.p_I10) >= 0.7 else 'MISMATCH'))
+    item(G7, 'destination on the remote steps', '0.0020', o.ID3_r, 4, ' bits'); item(G7, 'its p (1/51)', '0.0196', o.p_ID3_r, 4)
+    v = oc.set_index('sample').loc['vac_all']
+    item(G7, 'vacant runs', '40661', v.n_trips, 0)
+    item(G7, 'vacant runs: cell 5 back', '0.013', v.I5, 3, ' bits'); item(G7, 'vacant runs: cell 10 back', '0.0054', v.I10, 4, ' bits')
+    item(G7, 'vacant runs: largest p of the two (1/51)', '0.0196', max(v.p_I5, v.p_I10), 4)
 
 Q = pd.DataFrame(ROWS)
 if a.csv:

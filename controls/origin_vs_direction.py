@@ -17,10 +17,13 @@ which has no timestamps, so the period control is taxi-only). Taxi: the pooled 1
 in 6 h blocks. Bits.
 
     python controls/origin_vs_direction.py   -> results/origin_direction_geolife.csv, origin_direction_taxi.csv
+    python controls/origin_vs_direction.py taxi   -> only the taxi part
+Fix 2026-10-22: the taxi time stamps were in units of 1000 s under pandas 3 (see taxi_origin.py), so every vehicle was one
+trip of the whole day; the conversion now gives seconds. The GeoLife part has no time stamps and is not affected.
 """
 import sys as _sys, pathlib as _pl; _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))  # repository root
 from common import paths as P
-import glob, json, os
+import glob, json, os, sys
 import numpy as np, pandas as pd
 from multiprocessing import Pool
 import geolife_robust as gr
@@ -92,7 +95,8 @@ def geolife_user(path):
 
 def taxi_trips(f, vid):
     d = pd.read_csv(f, header=None, usecols=[1, 2, 3]); d[1] = pd.to_datetime(d[1])
-    d = d.sort_values(1); hour = d[1].dt.hour.to_numpy(); t = d[1].astype('int64').to_numpy() // 10 ** 9
+    d = d.sort_values(1); hour = d[1].dt.hour.to_numpy()
+    t = (d[1] - pd.Timestamp('1970-01-01')).dt.total_seconds().to_numpy().astype(np.int64)  # seconds whatever the datetime unit (10-22 fix; see taxi_origin.py)
     lon, lat = d[2].to_numpy(), d[3].to_numpy()
     ok = (lon > 120.8) & (lon < 122.2) & (lat > 30.6) & (lat < 31.9); t, lon, lat, hour = t[ok], lon[ok], lat[ok], hour[ok]
     if len(t) < 30: return []
@@ -115,13 +119,17 @@ def taxi_trips(f, vid):
 
 
 if __name__ == '__main__':
-    gl = sorted(glob.glob(os.path.join(str(P.GEOLIFE_CACHE), '*.npz')))
-    with Pool(2) as pool:
-        G = pd.DataFrame([r for r in pool.imap_unordered(geolife_user, gl) if r]).sort_values('user')
-    G.to_csv(P.out(P.CONTROLS_RESULTS / 'origin_direction_geolife.csv'), index=False)
+    parts = sys.argv[1:] or ['geolife', 'taxi']          # e.g. 'python controls/origin_vs_direction.py taxi' reruns the taxi part only
     pd.set_option('display.width', 200)
-    cols = [c for c in G.columns if c.startswith('I_')]   # p-values are in 'p_' + name
-    print('GeoLife users', len(G)); print(pd.DataFrame({'median': G[cols].median(), 'share_p<.05': [(G['p_' + c] < .05).mean() for c in cols]}).round(4))
+    if 'geolife' in parts:
+        gl = sorted(glob.glob(os.path.join(str(P.GEOLIFE_CACHE), '*.npz')))
+        with Pool(2) as pool:
+            G = pd.DataFrame([r for r in pool.imap_unordered(geolife_user, gl) if r]).sort_values('user')
+        G.to_csv(P.out(P.CONTROLS_RESULTS / 'origin_direction_geolife.csv'), index=False)
+        cols = [c for c in G.columns if c.startswith('I_')]   # p-values are in 'p_' + name
+        print('GeoLife users', len(G)); print(pd.DataFrame({'median': G[cols].median(), 'share_p<.05': [(G['p_' + c] < .05).mean() for c in cols]}).round(4))
+    if 'taxi' not in parts:
+        raise SystemExit
     pick = json.load(open(P.CONTROLS / 'taxi_pick.json'))
     trips = []; used = 0
     for f in pick:

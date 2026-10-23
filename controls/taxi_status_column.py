@@ -7,7 +7,10 @@ switches happen when the vehicle is (nearly) stopped. This script reports, per v
   share of records, vehicles (and vehicles that carry only this value), number of runs, quartiles of run duration
   and path length (km) over runs of at least 3 records (shorter runs are mostly one-record flicker), share of
   position-derived speed > 5 km/h during the run, and the median position-derived speed around a switch into the value.
-Speed is computed from consecutive positions (the recorded speed field is unreliable, see P3-1).
+Speed is computed from consecutive positions. (An earlier note here called the recorded speed field unreliable; that
+check had taken the speed and direction fields the wrong way round. Column 5 is the speed in km/h and column 6 the heading
+in units of 2 degrees; both agree with the positions, see heading_state.py, taxi_device. Column 7 is confirmed as the
+occupancy state by the data description of the release, 2026-10-22.)
 Deterministic, no random numbers; per-file summaries are cached in controls/work/taxi_status/<file>.pkl (atomic),
 so an interrupted run continues where it stopped.
 

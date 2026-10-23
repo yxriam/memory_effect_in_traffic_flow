@@ -13,7 +13,7 @@ sp = pd.read_csv(_P.CONTROLS_RESULTS / 'memory_by_mode_speed.csv').groupby('mode
 r = pd.read_csv(_P.CONTROLS_RESULTS / 'row_persistence.csv'); r = r[(r.gap == 30) & r['mode'].isin(MODES)]
 pa = pd.read_csv(_P.CONTROLS_RESULTS / 'memory_by_mode_path.csv'); pa = pa[pa.dejitter == 0]
 om = pd.read_csv(_P.CONTROLS_RESULTS / 'origin_memory_geolife.csv').query('dataset=="GeoLife"')
-t2 = pd.read_csv(_P.CONTROLS_RESULTS / 'taxi_origin_0.002.csv').iloc[0]
+t2 = pd.read_csv(_P.CONTROLS_RESULTS / 'taxi_occupied_trips.csv').set_index('sample').loc['occ_all']   # taxi passenger trips (2026-10-22)
 fig, axs = plt.subplots(2, 2, figsize=(6.3, 6.0), gridspec_kw=dict(hspace=0.55, wspace=0.42)); (p1, p2), (p3, p4) = axs
 # a speed memory by mode
 x = np.arange(len(MODES)); w = 0.26
@@ -48,13 +48,13 @@ for m in MODES:
 p3.set_xscale('log'); p3.set_xlabel('Inertia $\\tau_c$ (s)'); p3.set_ylabel('Relative excess CMI')
 p3.set_title('Layer 3 vs layer 2', loc='left'); panel_label(p3, 'c')
 # d origin memory
-labs = ['$I_3$', '$I_O$', '$I_{O|3}$']
+labs = ['$I_3$', '$I_O$', '$I_{O|3}$']                     # destination not shown: its step sets differ between the two data sets (10-22 review)
 g = [om.cmi3_excess.median(), om.origin_excess.median(), om.origin_beyond3_excess.median()]
-tx = [t2.cmi3, t2.origin, t2.origin3]
+tx = [t2.cmi3, t2.IO, t2.IO3]
 xx = np.arange(3); p4.bar(xx - 0.18, g, 0.36, color=NPG[3], label='GeoLife')
-p4.bar(xx + 0.18, tx, 0.36, color=NPG[4], label='taxi')
+p4.bar(xx + 0.18, tx, 0.36, color=NPG[4], label='taxi passenger trips')
 for i in range(3):
     p4.text(i - 0.18, g[i] + 0.0003, f'{g[i]:.4f}', ha='center', fontsize=7, rotation=90, va='bottom'); p4.text(i + 0.18, tx[i] + 0.0003, f'{tx[i]:.4f}', ha='center', fontsize=7, rotation=90, va='bottom')
 p4.set_xticks(xx); p4.set_xticklabels(labs); p4.set_ylabel('Excess CMI (bits/step)')
-p4.legend(loc='upper right'); p4.set_title('Trip-level component', loc='left'); p4.set_ylim(0, 0.022); panel_label(p4, 'd')
+p4.legend(loc='upper right'); p4.set_title('Trip-level component', loc='left'); p4.set_ylim(0, 0.016); panel_label(p4, 'd')
 fig.savefig(_P.out(_P.CONTROLS_FIGURES / 'fig_three_layers.pdf')); fig.savefig(_P.out(_P.CONTROLS_FIGURES / 'fig_three_layers.png'), dpi=150)
