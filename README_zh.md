@@ -151,7 +151,7 @@ memory_effect_in_traffic_flow/
 ├── local_paths.example.json      原始数据所在位置 → 复制为 local_paths.json（git 忽略）
 ├── common/                       paths.py（所有数据 / 结果位置）· fig_style.py（统一图样式）
 ├── EXPERIMENT_LOG.md             每次实验、重跑和核对的统一记录：数据 → 实验 → 结果 → 下一步（详细记录在 experiment_log/）
-├── STATUS.md                     研究现状：主线、结论、已知的薄弱处、任务清单
+├── STATUS.md                     研究现状：主线、结论、已知的薄弱处、进度看板
 ├── AGENTS.md · CLAUDE.md         代码代理共用的规则（Codex 读 AGENTS.md；CLAUDE.md 为 Claude Code 导入它）
 ├── tasks/                        交给代理的任务说明：一个任务一个文件，写明执行者和审查者
 ├── tools/check_paper_numbers.py  把论文里的每个数字和已提交的结果表逐项比对

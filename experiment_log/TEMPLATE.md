@@ -1,6 +1,6 @@
 # YYYY-MM-DD 主题（一句话）
 
-> 复制本文件为 `experiment_log/YYYY-MM-DD_<主题>.md`，填完后在 `EXPERIMENT_LOG.md` 总表加一行，并更新“当前的下一步”。
+> 复制本文件为 `experiment_log/YYYY-MM-DD_<主题>.md`，填完后在 `EXPERIMENT_LOG.md` 总表加一行，并更新 `STATUS.md` 第 8 节。
 
 ## 目的
 

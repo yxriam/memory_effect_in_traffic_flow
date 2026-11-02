@@ -52,3 +52,6 @@ DONE.txt
 prediction/results/work_taxi_network_controls/
 *.pt.tmp
 prediction/results/neural/resume_test/
+
+# ---- per-machine agent/plugin state (oh-my-claudecode etc.) ----
+.omc/

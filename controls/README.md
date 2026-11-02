@@ -128,3 +128,23 @@ by vehicle (seed 1). Fitted values are in `results/coarse_model_params.json`.
 Every figure except `fig_highd_augment.pdf` regenerates pixel-identically from the committed tables.
 `vacf_kernels.npz` was not kept from the original run, so `fig_highd_aug.py` needs one run of
 `highd_augment.py` first (the committed PDF is from that original run).
+
+## T09 highD 向后窗口（新增，旧脚本和旧结果不变）
+
+- `python controls/absorption_highd.py noise --recording 01`：同帧比较中心、单帧向后、两帧向后差分，输入来自 `common.paths.HIGHD_TRACKS`；输出 `results/absorption_highd_noise_01.csv`。没有测量误差真值，报告的是含真实运动的噪声代理。
+- `python controls/absorption_highd.py legacy-check --recording all`：从原位置数据构造旧中心差分，用 `HIGHD_FULL` 的车道号按录像/车辆/帧关联；复现旧 V1/V2/V3/VA1/VA2 × 三个车辆划分，输出 `results/absorption_highd_legacy_reproduction.csv`。不会运行旧脚本的主程序，不会覆盖旧结果。只核对列出的模型，不包含前车模型。
+- `python controls/absorption_ledger.py highd --recording 01 --pilot --k 1 3 --variable fine acc --repeats 1`：单录像计时与正确性检查，输出 `results/absorption_highd_pilot_01.csv`，不作全系统结论。
+- `python controls/absorption_ledger.py highd`：旧口径复现通过后，在全部 60 段录像上执行两帧向后窗口主分析，输出 `results/absorption_highd.csv`。当前实现系统仅 highD，其他三个系统尚未实现。主变量 fine、k=3 的剩余 CMI 与阴性校准由下列脚本单独完成；其他 CMI 部分标记待评估，不能据此宣布整个 T09 完成。
+- `python controls/absorption_ledger.py highd --mode center --repeats 0`：输出 `results/absorption_highd_center.csv`，同一批有效预测帧上的旧窗口诊断；当前、历史和目标均用中心差分。新旧口径各有自己的训练分箱边界、目标数值，CE 差异是口径敏感性，不等于在同一目标定义上的模型优劣。
+
+主口径：`v[t]=(x[t]-x[t-2])/0.08`、`a[t]=(v[t]-v[t-5])/0.2`，保持原车辆划分（100/101/102 三种子）和 `frame % 5 == 0` 的 0.2 s 采样；当前、历史和目标一致。速度窗口为 0.08 s，加速度计算涉及过去 0.28 s 的位置，解释输入历史长度时计入该窗口。采用“向后窗口”措辞，不能消除上游轨迹平滑可能使用未来信息的限制。
+
+Ctrl+C 中断，原命令重跑即续跑。每个录像、每个模型单元在 `work/absorption/highd/` 下原子保存（先 .tmp 再改名），中间数据不提交。200 次车辆整体 bootstrap 的区间以已拟合模型为条件；同一车辆在不同外层划分中的测试贡献一起重抽。近期换道分组缺乏前 2 s 连续观测时标为未知，不当作未换道。急加减速组按训练车辆的 |a| 第 90 百分位阈值（含并列）定义。
+
+新旧主表完成后：`python controls/absorption_ledger.py compare-highd-windows` 生成 `results/absorption_highd_window_comparison.csv`。
+
+- `python controls/absorption_highd_cmi.py --recording 01 --pilot --negative-reps 1`：单录像 CMI/阴性计时；`python controls/absorption_highd_cmi.py`：fine、k=3 的三划分观测 CMI 与各 30 次匹配一阶联合状态阴性序列，输出 `results/absorption_highd_residual.csv` 和 `results/absorption_highd_negative.csv`。20 次置换保持与旧流程一致；每次阴性重复原子续跑。校准针对全体步，不覆盖各失败分组。
+- `python controls/absorption_ledger.py summarize-highd`：从完成单元重建两种窗口汇总与差异表；`python controls/absorption_ledger.py assess-highd`：按判据附入已完成的主变量 k=3 全体步 CMI 诊断，输出 `results/absorption_highd_assessment.json`。主表再次续跑时会恢复已存在的完整诊断，不把它清除。
+- 新旧窗口差异表中 `same_target_frames=True` 的全体/车道组可以配对比较；急加减速分组随窗口改变成员，因此不报配对差（delta 为缺失）。
+
+当前覆盖：highD 留出/打乱对照 k=1–3、fine/acc 与预定失效分组已完成；剩余检验仅 fine/k=3/全体步做了阴性校准，CMI 车辆重抽样区间及其他系统尚未完成。30 次阴性重复只检查有无明显偏高，不能证明精确 5% 校准；不把处理后速度状态中的依赖解释为驾驶员的物理记忆。

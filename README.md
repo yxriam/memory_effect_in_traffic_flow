@@ -152,7 +152,7 @@ memory_effect_in_traffic_flow/
 ├── local_paths.example.json      where your raw data lives → copy to local_paths.json (git-ignored)
 ├── common/                       paths.py (all data / result locations) · fig_style.py (shared figure style)
 ├── EXPERIMENT_LOG.md             every experiment, re-run and check: data → experiment → results → next steps (details in experiment_log/)
-├── STATUS.md                     where the research stands: main line, conclusions, known weak points, task list (Chinese)
+├── STATUS.md                     where the research stands: main line, conclusions, known weak points, progress board (Chinese)
 ├── AGENTS.md · CLAUDE.md         shared rules for coding agents (Codex reads AGENTS.md; CLAUDE.md imports it for Claude Code)
 ├── tasks/                        task specs for the agents: one file per task, with an executor and a reviewer
 ├── tools/check_paper_numbers.py  compares every number of the paper with the committed result tables
